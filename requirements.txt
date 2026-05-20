@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 requests
 pytest
+httpx
 tomlkit
 mutagen
 pywebview
