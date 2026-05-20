@@ -1,0 +1,51 @@
+name: Build Release Apps
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: Build macOS app
+    runs-on: macos-15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build app
+        run: ./scripts/package_macos.sh
+      - name: Archive app
+        run: ditto -c -k --keepParent "dist/Tidal Max FLAC Studio.app" "Tidal-Max-FLAC-Studio-macOS.zip"
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Tidal-Max-FLAC-Studio-macOS.zip
+
+  build-windows:
+    name: Build Windows app
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build app
+        shell: pwsh
+        run: .\scripts\package_windows.ps1
+      - name: Archive app
+        shell: pwsh
+        run: Compress-Archive -Path "dist\Tidal Max FLAC Studio" -DestinationPath "Tidal-Max-FLAC-Studio-Windows.zip" -Force
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Tidal-Max-FLAC-Studio-Windows.zip

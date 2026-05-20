@@ -48,6 +48,16 @@ The UI can install missing macOS tools from the setup screen:
 
 ## Install
 
+For most users, download the packaged app from:
+
+```text
+https://github.com/HonstinII/tidal-max-flac-download/releases
+```
+
+Download the macOS zip or Windows zip, unzip it, then open **Tidal Max FLAC Studio**.
+
+Developers can also run from source:
+
 ```bash
 ./scripts/install.sh
 ```
@@ -88,6 +98,11 @@ Manual run command:
 ```
 
 ## Package Desktop Apps
+
+Release builds are generated automatically by GitHub Actions when a `v*` tag is pushed. The workflow builds:
+
+- `Tidal-Max-FLAC-Studio-macOS.zip`
+- `Tidal-Max-FLAC-Studio-Windows.zip`
 
 Build a macOS `.app` on macOS:
 

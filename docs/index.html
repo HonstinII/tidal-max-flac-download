@@ -172,35 +172,37 @@
       <section class="path">
         <div>
           <strong>1. This page</strong>
-          <p>Read the guide and go to the GitHub repository.</p>
+          <p>Read the guide and open the GitHub Releases page.</p>
         </div>
         <div>
-          <strong>2. GitHub repository</strong>
-          <p>Clone or download the source code.</p>
+          <strong>2. Download app</strong>
+          <p>Download the macOS or Windows zip from Releases.</p>
         </div>
         <div>
           <strong>3. Local product</strong>
-          <p>Run the desktop app or open <code>127.0.0.1:8000</code>.</p>
+          <p>Unzip it, open the app, bind Tidal, then download.</p>
         </div>
       </section>
       <div class="actions">
-        <a class="button primary" href="https://github.com/HonstinII/tidal-max-flac-download">Open GitHub repository</a>
+        <a class="button primary" href="https://github.com/HonstinII/tidal-max-flac-download/releases">Download app</a>
+        <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download">Open GitHub repository</a>
         <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
       </div>
       <section class="steps">
         <article class="card">
-          <h2>1. Clone and install</h2>
-          <pre><code>git clone https://github.com/HonstinII/tidal-max-flac-download.git
-cd tidal-max-flac-download
-./scripts/install.sh</code></pre>
+          <h2>1. Download release</h2>
+          <p>
+            Open GitHub Releases and download
+            <code>Tidal-Max-FLAC-Studio-macOS.zip</code> or
+            <code>Tidal-Max-FLAC-Studio-Windows.zip</code>.
+          </p>
         </article>
         <article class="card">
-          <h2>2. Start the local app</h2>
-          <pre><code>.venv/bin/python -m app.desktop</code></pre>
+          <h2>2. Open the app</h2>
           <p>
-            This opens the product in a desktop window and starts the local
-            backend automatically. Developers can also run
-            <code>./scripts/run.sh</code> to use the browser version.
+            Unzip the file and open <strong>Tidal Max FLAC Studio</strong>.
+            macOS users can move the app to Applications; Windows users can run
+            the executable inside the unzipped folder.
           </p>
         </article>
         <article class="card">
@@ -225,8 +227,8 @@ cd tidal-max-flac-download
         <article class="card">
           <h2>Packaged</h2>
           <p>
-            Build a macOS app with <code>./scripts/package_macos.sh</code> or a
-            Windows app with <code>.\scripts\package_windows.ps1</code>.
+            GitHub Releases provides downloadable macOS and Windows builds.
+            Developers can still build locally with the package scripts.
           </p>
         </article>
         <article class="card">
