@@ -36,3 +36,5 @@ def test_pages_has_three_usage_steps():
     assert "Prepare the environment" in html
     assert "Link Tidal" in html
     assert "Paste URLs and download" in html
+    assert "If streamrip, ffmpeg, or metaflac is missing" in html
+    assert "<br />" in html

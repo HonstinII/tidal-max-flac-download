@@ -66,7 +66,11 @@
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        margin: 28px 0 16px;
+        margin: 28px 0 0;
+      }
+
+      .secondary-actions {
+        margin-top: 18px;
       }
 
       a.button {
@@ -97,21 +101,24 @@
       }
 
       .credit {
-        margin-top: 10px;
+        border-top: 1px solid var(--line);
+        margin-top: 42px;
+        padding-top: 18px;
         font-size: 14px;
       }
 
       .steps {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-        margin-top: 32px;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 28px;
+        max-width: 780px;
       }
 
       .step-card {
         border: 1px solid var(--line);
         background: color-mix(in srgb, var(--panel) 92%, black);
-        padding: 18px;
+        padding: 18px 20px;
       }
 
       .step-label {
@@ -129,12 +136,7 @@
 
       .step-card p {
         margin: 0;
-      }
-
-      @media (max-width: 780px) {
-        .steps {
-          grid-template-columns: 1fr;
-        }
+        max-width: 620px;
       }
     </style>
   </head>
@@ -156,6 +158,37 @@
           class="button secondary-download"
           href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.1.1/Tidal-Max-FLAC-Studio-Windows.zip"
         >Download for Windows</a>
+      </div>
+      <section class="steps" aria-label="How to use">
+        <article class="step-card">
+          <div class="step-label">Step 1</div>
+          <h2>Prepare the environment</h2>
+          <p>
+            Open the app and finish the tool check.<br />
+            If streamrip, ffmpeg, or metaflac is missing, use the setup screen
+            to install the required tools.
+          </p>
+        </article>
+        <article class="step-card">
+          <div class="step-label">Step 2</div>
+          <h2>Link Tidal</h2>
+          <p>
+            Click the Tidal authorization link and sign in on Tidal.<br />
+            Return to the app after authorization; it will detect the token and
+            unlock the download workspace.
+          </p>
+        </article>
+        <article class="step-card">
+          <div class="step-label">Step 3</div>
+          <h2>Paste URLs and download</h2>
+          <p>
+            Copy a Tidal album or track URL into the app.<br />
+            Choose an output folder, keep covers and lyrics enabled, then start
+            the FLAC download.
+          </p>
+        </article>
+      </section>
+      <div class="actions secondary-actions">
         <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download/releases">All releases</a>
         <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download">Open GitHub repository</a>
         <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
@@ -166,32 +199,6 @@
         <a href="https://github.com/nathom/streamrip">streamrip</a>, created by
         <code>nathom</code>.
       </p>
-      <section class="steps" aria-label="How to use">
-        <article class="step-card">
-          <div class="step-label">Step 1</div>
-          <h2>Prepare the environment</h2>
-          <p>
-            Open the app and finish the tool check. Install missing core tools
-            from the setup screen if the app asks for them.
-          </p>
-        </article>
-        <article class="step-card">
-          <div class="step-label">Step 2</div>
-          <h2>Link Tidal</h2>
-          <p>
-            Click the Tidal authorization link, sign in on Tidal, then return to
-            the app after the token is detected.
-          </p>
-        </article>
-        <article class="step-card">
-          <div class="step-label">Step 3</div>
-          <h2>Paste URLs and download</h2>
-          <p>
-            Paste Tidal album or track URLs, choose the output folder, then
-            start the FLAC download with covers and lyrics enabled.
-          </p>
-        </article>
-      </section>
     </main>
   </body>
 </html>
