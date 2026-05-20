@@ -14,6 +14,8 @@ fi
   --noconfirm \
   --windowed \
   --name "Tidal Max FLAC Studio" \
+  --icon "assets/app_icon.icns" \
+  --osx-bundle-identifier "com.honstinii.tidalmaxflacstudio" \
   --add-data "app/static:app/static" \
   --hidden-import "uvicorn.logging" \
   --hidden-import "uvicorn.loops" \

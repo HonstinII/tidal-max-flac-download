@@ -13,6 +13,7 @@ if (!(Test-Path ".venv\Scripts\python.exe")) {
   --noconfirm `
   --windowed `
   --name "Tidal Max FLAC Studio" `
+  --icon "assets/app_icon.ico" `
   --add-data "app/static;app/static" `
   --hidden-import "uvicorn.logging" `
   --hidden-import "uvicorn.loops" `

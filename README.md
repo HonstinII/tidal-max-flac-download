@@ -103,6 +103,8 @@ Build a Windows `.exe` on Windows PowerShell:
 
 The packaged app opens the same UI in a native desktop window and starts the local backend automatically.
 
+The packaged macOS app and Windows executable use the product name **Tidal Max FLAC Studio** and the custom icon in `assets/`. When running the development command directly with `python -m app.desktop`, macOS may still show the Python interpreter icon because that is not the packaged app.
+
 ## Binding Tidal
 
 On first launch, the app shows a two-step binding guide.
