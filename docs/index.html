@@ -91,6 +91,12 @@
         gap: 14px;
       }
 
+      .steps {
+        display: grid;
+        gap: 14px;
+        margin: 36px 0 14px;
+      }
+
       .card {
         border: 1px solid var(--line);
         background: color-mix(in srgb, var(--panel) 92%, black);
@@ -104,6 +110,22 @@
 
       code {
         color: var(--accent);
+      }
+
+      pre {
+        overflow: auto;
+        border: 1px solid var(--line);
+        background: #0e1210;
+        color: var(--text);
+        padding: 14px;
+        line-height: 1.5;
+      }
+
+      .notice {
+        border: 1px solid color-mix(in srgb, var(--amber) 54%, var(--line));
+        background: rgba(225, 166, 75, 0.08);
+        padding: 16px 18px;
+        margin: 28px 0 0;
       }
 
       @media (max-width: 780px) {
@@ -122,10 +144,38 @@
         Tidal binding, Max/Hi-Res FLAC downloads, cover embedding, lyrics
         tagging, output folder controls, and a guided setup flow.
       </p>
+      <div class="notice">
+        <strong>This page is not the downloader.</strong>
+        <p>
+          GitHub Pages can only host this static guide. To use the app, run it
+          locally on your Mac, then open <code>http://127.0.0.1:8000</code>.
+        </p>
+      </div>
       <div class="actions">
-        <a class="button primary" href="../">View repository</a>
+        <a class="button primary" href="https://github.com/HonstinII/tidal-max-flac-download">Open GitHub repository</a>
         <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
       </div>
+      <section class="steps">
+        <article class="card">
+          <h2>1. Clone and install</h2>
+          <pre><code>git clone https://github.com/HonstinII/tidal-max-flac-download.git
+cd tidal-max-flac-download
+./scripts/install.sh</code></pre>
+        </article>
+        <article class="card">
+          <h2>2. Start the local app</h2>
+          <pre><code>.venv/bin/python -m uvicorn app.main:app --reload</code></pre>
+          <p>Then open <code>http://127.0.0.1:8000</code> in your browser.</p>
+        </article>
+        <article class="card">
+          <h2>3. Bind Tidal and download</h2>
+          <p>
+            Use the setup screen to install missing tools, bind your Tidal
+            account, paste Tidal track or album URLs, choose an output folder,
+            then start the FLAC download.
+          </p>
+        </article>
+      </section>
       <section class="grid">
         <article class="card">
           <h2>Core</h2>
