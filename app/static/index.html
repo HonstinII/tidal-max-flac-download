@@ -8,13 +8,85 @@
   </head>
   <body>
     <main class="shell">
-      <section class="console">
-        <p class="eyebrow">Local audio workstation</p>
-        <h1>Tidal Max FLAC Studio</h1>
-        <p class="lede">
-          Bind Tidal first, then download Max FLAC files with embedded cover art.
-        </p>
-        <div id="app" class="status-panel">Initializing...</div>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Local audio workstation</p>
+          <h1>Tidal Max FLAC Studio</h1>
+        </div>
+        <div id="boundStatus" class="bound-status">Checking binding...</div>
+      </header>
+
+      <section id="setupPanel" class="grid panel setup-panel">
+        <div>
+          <p class="section-kicker">Step 1</p>
+          <h2>Check the chain</h2>
+          <p class="muted">
+            The app needs local tools and a streamrip-compatible config before it
+            can bind Tidal.
+          </p>
+          <div id="checks" class="check-list"></div>
+        </div>
+
+        <div>
+          <p class="section-kicker">Step 2</p>
+          <h2>Bind Tidal</h2>
+          <p class="muted">
+            Open Tidal's official authorization page. You sign in there; this app
+            never sees your password.
+          </p>
+          <button id="bindButton" class="primary-button">Start Tidal binding</button>
+          <div id="bindMessage" class="message"></div>
+        </div>
+
+        <div>
+          <p class="section-kicker">Step 3</p>
+          <h2>Confirm token</h2>
+          <p class="muted">
+            After authorization, this page automatically detects the token and
+            unlocks the downloader.
+          </p>
+          <div id="tokenMessage" class="message">Waiting for binding.</div>
+        </div>
+      </section>
+
+      <section id="workspace" class="workspace hidden">
+        <section class="panel input-panel">
+          <div>
+            <p class="section-kicker">Download</p>
+            <h2>Paste Tidal URLs</h2>
+          </div>
+          <textarea id="urlInput" spellcheck="false" placeholder="https://tidal.com/track/526130766/u&#10;https://tidal.com/album/523643849/u"></textarea>
+          <div class="controls">
+            <label>
+              Output folder
+              <input id="outputDir" type="text" />
+            </label>
+            <label>
+              Segment concurrency
+              <input id="concurrency" type="number" min="1" max="24" value="10" />
+            </label>
+            <label class="toggle">
+              <input id="embedCovers" type="checkbox" checked />
+              Embed cover art
+            </label>
+            <label class="toggle">
+              <input id="skipExisting" type="checkbox" checked />
+              Skip existing files
+            </label>
+          </div>
+          <button id="downloadButton" class="primary-button">Start download</button>
+        </section>
+
+        <section class="panel output-panel">
+          <div class="output-head">
+            <div>
+              <p class="section-kicker">Queue</p>
+              <h2>Session events</h2>
+            </div>
+            <span id="jobStatus" class="status-light">Idle</span>
+          </div>
+          <div id="events" class="events"></div>
+        </section>
       </section>
     </main>
     <script src="/static/app.js"></script>
