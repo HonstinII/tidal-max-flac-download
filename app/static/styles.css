@@ -46,6 +46,34 @@ textarea {
   margin-bottom: 24px;
 }
 
+.top-actions,
+.output-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.language-switch {
+  display: flex;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+}
+
+.lang-button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  min-height: 38px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.lang-button.active {
+  background: var(--meter);
+  color: #07110d;
+  font-weight: 700;
+}
+
 .eyebrow,
 .section-kicker {
   margin: 0 0 8px;
@@ -195,7 +223,7 @@ input[type="number"] {
 
 .folder-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
 }
 

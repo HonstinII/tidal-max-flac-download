@@ -13,14 +13,20 @@
           <p class="eyebrow">Local audio workstation</p>
           <h1>Tidal Max FLAC Studio</h1>
         </div>
-        <div id="boundStatus" class="bound-status">Checking binding...</div>
+        <div class="top-actions">
+          <div class="language-switch" aria-label="Language">
+            <button id="langEn" type="button" class="lang-button active">EN</button>
+            <button id="langZh" type="button" class="lang-button">中文</button>
+          </div>
+          <div id="boundStatus" class="bound-status">Checking binding...</div>
+        </div>
       </header>
 
       <section id="setupPanel" class="grid panel setup-panel">
         <div>
-          <p class="section-kicker">Step 1</p>
-          <h2>Check the chain</h2>
-          <p class="muted">
+          <p class="section-kicker" data-i18n="step1">Step 1</p>
+          <h2 data-i18n="checkChain">Check the chain</h2>
+          <p class="muted" data-i18n="checkChainCopy">
             The app needs local tools and a streamrip-compatible config before it
             can bind Tidal.
           </p>
@@ -28,70 +34,72 @@
         </div>
 
         <div>
-          <p class="section-kicker">Step 2</p>
-          <h2>Bind Tidal</h2>
-          <p class="muted">
+          <p class="section-kicker" data-i18n="step2">Step 2</p>
+          <h2 data-i18n="bindTidal">Bind Tidal</h2>
+          <p class="muted" data-i18n="bindTidalCopy">
             Open Tidal's official authorization page. You sign in there; this app
             never sees your password.
           </p>
-          <button id="bindButton" class="primary-button">Start Tidal binding</button>
+          <button id="bindButton" class="primary-button" data-i18n="startBinding">Start Tidal binding</button>
           <div id="bindMessage" class="message"></div>
         </div>
 
         <div>
-          <p class="section-kicker">Step 3</p>
-          <h2>Confirm token</h2>
-          <p class="muted">
+          <p class="section-kicker" data-i18n="step3">Step 3</p>
+          <h2 data-i18n="confirmToken">Confirm token</h2>
+          <p class="muted" data-i18n="confirmTokenCopy">
             After authorization, this page automatically detects the token and
             unlocks the downloader.
           </p>
-          <div id="tokenMessage" class="message">Waiting for binding.</div>
+          <div id="tokenMessage" class="message" data-i18n="waitingBinding">Waiting for binding.</div>
         </div>
       </section>
 
       <section id="workspace" class="workspace hidden">
         <section class="panel input-panel">
           <div>
-            <p class="section-kicker">Download</p>
-            <h2>Paste Tidal URLs</h2>
+            <p class="section-kicker" data-i18n="download">Download</p>
+            <h2 data-i18n="pasteUrls">Paste Tidal URLs</h2>
           </div>
           <textarea id="urlInput" spellcheck="false" placeholder="https://tidal.com/track/526130766/u&#10;https://tidal.com/album/523643849/u"></textarea>
           <div class="controls">
             <label>
-              Output folder
+              <span data-i18n="outputFolder">Output folder</span>
               <span class="folder-row">
                 <input id="outputDir" type="text" />
-                <button id="pickFolder" type="button" class="secondary-button">Choose</button>
-                <button id="openFolder" type="button" class="secondary-button">Open</button>
+                <button id="pickFolder" type="button" class="secondary-button" data-i18n="choose">Choose</button>
               </span>
             </label>
             <label>
-              Segment concurrency
+              <span data-i18n="segmentConcurrency">Segment concurrency</span>
               <input id="concurrency" type="number" min="1" max="24" value="10" />
             </label>
             <label class="toggle">
               <input id="embedCovers" type="checkbox" checked />
-              Embed cover art
+              <span data-i18n="embedCover">Embed cover art</span>
             </label>
             <label class="toggle">
               <input id="embedLyrics" type="checkbox" checked />
-              Embed lyrics
+              <span data-i18n="embedLyrics">Embed lyrics</span>
             </label>
             <label class="toggle">
               <input id="skipExisting" type="checkbox" checked />
-              Skip existing files
+              <span data-i18n="skipExisting">Skip existing files</span>
             </label>
           </div>
-          <button id="downloadButton" class="primary-button">Start download</button>
+          <button id="downloadButton" class="primary-button" data-i18n="startDownload">Start download</button>
         </section>
 
         <section class="panel output-panel">
           <div class="output-head">
             <div>
-              <p class="section-kicker">Queue</p>
-              <h2>Session events</h2>
+              <p class="section-kicker" data-i18n="queue">Queue</p>
+              <h2 data-i18n="sessionEvents">Session events</h2>
             </div>
-            <span id="jobStatus" class="status-light">Idle</span>
+            <div class="output-actions">
+              <button id="openFolder" type="button" class="secondary-button hidden" data-i18n="openFolder">Open folder</button>
+              <span id="jobStatus" class="status-light" data-i18n="idle">Idle</span>
+            </div>
           </div>
           <div id="events" class="events"></div>
         </section>
