@@ -66,7 +66,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        margin: 28px 0 34px;
+        margin: 28px 0 16px;
       }
 
       a.button {
@@ -92,86 +92,13 @@
         font-weight: 700;
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
-      }
-
-      .steps {
-        display: grid;
-        gap: 14px;
-        margin: 36px 0 14px;
-      }
-
-      .card {
-        border: 1px solid var(--line);
-        background: color-mix(in srgb, var(--panel) 92%, black);
-        padding: 18px;
-      }
-
-      .card h2 {
-        margin: 0 0 10px;
-        font-size: 20px;
-      }
-
       code {
         color: var(--accent);
       }
 
-      pre {
-        overflow: auto;
-        border: 1px solid var(--line);
-        background: #0e1210;
-        color: var(--text);
-        padding: 14px;
-        line-height: 1.5;
-      }
-
-      .notice {
-        border: 1px solid color-mix(in srgb, var(--amber) 54%, var(--line));
-        background: rgba(225, 166, 75, 0.08);
-        padding: 16px 18px;
-        margin: 28px 0 0;
-      }
-
-      .path {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
-        margin-top: 22px;
-      }
-
-      .path div {
-        border: 1px solid var(--line);
-        background: #111714;
-        padding: 14px;
-      }
-
-      .download-panel {
-        border: 1px solid var(--line);
-        background: #111714;
-        margin: 28px 0 6px;
-        padding: 18px;
-      }
-
-      .download-panel h2 {
-        margin: 0 0 8px;
-        font-size: 22px;
-      }
-
-      .download-panel p {
-        margin: 0;
-      }
-
-      @media (max-width: 780px) {
-        .grid {
-          grid-template-columns: 1fr;
-        }
-
-        .path {
-          grid-template-columns: 1fr;
-        }
+      .credit {
+        margin-top: 8px;
+        font-size: 14px;
       }
     </style>
   </head>
@@ -184,101 +111,23 @@
         Tidal binding, Max/Hi-Res FLAC downloads, cover embedding, lyrics
         tagging, output folder controls, and a guided setup flow.
       </p>
-      <div class="notice">
-        <strong>You do not enter the product from GitHub Pages.</strong>
-        <p>
-          This page is the instruction page. The product is a local desktop app
-          or local browser app. Users download the repository, install it, then
-          start the app on their own computer.
-        </p>
-      </div>
-      <section class="path">
-        <div>
-          <strong>1. This page</strong>
-          <p>Read the guide and open the GitHub Releases page.</p>
-        </div>
-        <div>
-          <strong>2. Download app</strong>
-          <p>Download the macOS or Windows zip from Releases.</p>
-        </div>
-        <div>
-          <strong>3. Local product</strong>
-          <p>Unzip it, open the app, bind Tidal, then download.</p>
-        </div>
-      </section>
-      <section class="download-panel" aria-labelledby="download-title">
-        <h2 id="download-title">Download the desktop app</h2>
-        <p>
-          Choose your platform, unzip the download, then open
-          <strong>Tidal Max FLAC Studio</strong>.
-        </p>
-        <div class="actions">
-          <a
-            class="button primary"
-            href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.1.1/Tidal-Max-FLAC-Studio-macOS.zip"
-          >Download for macOS</a>
-          <a
-            class="button secondary-download"
-            href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.1.1/Tidal-Max-FLAC-Studio-Windows.zip"
-          >Download for Windows</a>
-          <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download/releases">All releases</a>
-        </div>
-      </section>
       <div class="actions">
+        <a
+          class="button primary"
+          href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.1.1/Tidal-Max-FLAC-Studio-macOS.zip"
+        >Download for macOS</a>
+        <a
+          class="button secondary-download"
+          href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.1.1/Tidal-Max-FLAC-Studio-Windows.zip"
+        >Download for Windows</a>
+        <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download/releases">All releases</a>
         <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download">Open GitHub repository</a>
         <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
       </div>
-      <section class="steps">
-        <article class="card">
-          <h2>1. Download release</h2>
-          <p>
-            Open GitHub Releases and download
-            <code>Tidal-Max-FLAC-Studio-macOS.zip</code> or
-            <code>Tidal-Max-FLAC-Studio-Windows.zip</code>.
-          </p>
-        </article>
-        <article class="card">
-          <h2>2. Open the app</h2>
-          <p>
-            Unzip the file and open <strong>Tidal Max FLAC Studio</strong>.
-            macOS users can move the app to Applications; Windows users can run
-            the executable inside the unzipped folder.
-          </p>
-        </article>
-        <article class="card">
-          <h2>3. Bind Tidal and download</h2>
-          <p>
-            Use the setup screen to install missing tools, bind your Tidal
-            account, paste Tidal track or album URLs, choose an output folder,
-            then start the FLAC download.
-          </p>
-        </article>
-      </section>
-      <section class="grid">
-        <article class="card">
-          <h2>Core</h2>
-          <p>
-            The core downloading foundation is
-            <a href="https://github.com/nathom/streamrip">streamrip</a>, created
-            by <code>nathom</code>. This project builds a local studio workflow
-            around that tool.
-          </p>
-        </article>
-        <article class="card">
-          <h2>Packaged</h2>
-          <p>
-            GitHub Releases provides downloadable macOS and Windows builds.
-            Developers can still build locally with the package scripts.
-          </p>
-        </article>
-        <article class="card">
-          <h2>Local first</h2>
-          <p>
-            GitHub Pages is only this static project page. The downloader itself
-            runs locally because it needs your local tools, tokens, and files.
-          </p>
-        </article>
-      </section>
+      <p class="credit">
+        Powered by <a href="https://github.com/nathom/streamrip">streamrip</a>,
+        created by <code>nathom</code>.
+      </p>
     </main>
   </body>
 </html>

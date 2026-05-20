@@ -12,3 +12,11 @@ def test_pages_has_direct_release_download_buttons():
     assert "Tidal-Max-FLAC-Studio-macOS.zip" in html
     assert "Tidal-Max-FLAC-Studio-Windows.zip" in html
     assert "releases/download/v0.1.1" in html
+
+
+def test_pages_omits_explainer_cards():
+    html = (ROOT / "docs" / "index.html").read_text()
+
+    assert "You do not enter the product from GitHub Pages" not in html
+    assert "Download the desktop app" not in html
+    assert 'class="card"' not in html
