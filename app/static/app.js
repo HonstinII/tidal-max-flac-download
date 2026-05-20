@@ -2,21 +2,27 @@ const state = {
   setup: null,
   authSession: null,
   eventSource: null,
+  installEventSource: null,
   language: localStorage.getItem("language") || "en",
   lastOutputDir: null,
+  toastTimer: null,
+  authStatus: "",
 };
 
 const els = {
   langEn: document.querySelector("#langEn"),
   langZh: document.querySelector("#langZh"),
-  boundStatus: document.querySelector("#boundStatus"),
+  accountControl: document.querySelector("#accountControl"),
+  accountDropdown: document.querySelector("#accountDropdown"),
   unbindButton: document.querySelector("#unbindButton"),
+  workspaceAccountButton: document.querySelector("#workspaceAccountButton"),
   setupPanel: document.querySelector("#setupPanel"),
   workspace: document.querySelector("#workspace"),
   checks: document.querySelector("#checks"),
+  installToolsButton: document.querySelector("#installToolsButton"),
+  installLog: document.querySelector("#installLog"),
   bindButton: document.querySelector("#bindButton"),
   bindMessage: document.querySelector("#bindMessage"),
-  tokenMessage: document.querySelector("#tokenMessage"),
   urlInput: document.querySelector("#urlInput"),
   outputDir: document.querySelector("#outputDir"),
   pickFolder: document.querySelector("#pickFolder"),
@@ -28,6 +34,7 @@ const els = {
   downloadButton: document.querySelector("#downloadButton"),
   events: document.querySelector("#events"),
   jobStatus: document.querySelector("#jobStatus"),
+  toast: document.querySelector("#toast"),
 };
 
 const copy = {
@@ -38,18 +45,27 @@ const copy = {
     bound: "Bound to Tidal",
     notBound: "Tidal not bound",
     unbind: "Unbind",
+    unbindAccount: "Unbind account",
     unbindConfirm: "Unbind this Tidal account? You can bind a different account afterward.",
+    core: "Core",
+    optional: "Optional",
     step1: "Step 1",
     step2: "Step 2",
-    step3: "Step 3",
     checkChain: "Check the chain",
-    checkChainCopy: "The app needs local tools and a streamrip-compatible config before it can bind Tidal.",
+    checkChainCopy: "Core tools must be ready before the downloader opens. Optional tools only affect cover or metadata extras.",
     bindTidal: "Bind Tidal",
     bindTidalCopy: "Open Tidal's official authorization page. You sign in there; this app never sees your password.",
     startBinding: "Start Tidal binding",
-    confirmToken: "Confirm token",
-    confirmTokenCopy: "After authorization, this page automatically detects the token and unlocks the downloader.",
-    waitingBinding: "Waiting for binding.",
+    accountSettings: "Account",
+    checkStreamrip: "Core download tool that manages Tidal-compatible download configuration.",
+    checkFfmpeg: "Core audio processor used to assemble and write FLAC files.",
+    checkMetaflac: "Optional metadata helper for embedding cover art into FLAC files.",
+    checkConfig: "Core local config file used to store Tidal authorization safely.",
+    installMissing: "Install missing tools",
+    installingTools: "Installing missing tools...",
+    installComplete: "Tool installation complete. Rechecking environment...",
+    installFailed: "Tool installation failed.",
+    notFound: "not found",
     download: "Download",
     pasteUrls: "Paste Tidal URLs",
     outputFolder: "Output folder",
@@ -66,6 +82,12 @@ const copy = {
     creatingLink: "Creating Tidal authorization link...",
     opened: "Opened",
     status: "Status",
+    bindingWait: "Binding Tidal. Please do not refresh this page.",
+    bindingPending: "Waiting for Tidal authorization. Keep this page open.",
+    bindingSuccess: "Tidal bound. Opening the downloader...",
+    bindingFailed: "Tidal binding failed. Please start again.",
+    bindingExpired: "Tidal binding expired. Please start again.",
+    authLinkHelp: "Click to open authorization page",
     pasteAtLeastOne: "Paste at least one Tidal URL.",
     fetching: "Fetching",
     fetched: "Fetch succeeded",
@@ -81,18 +103,27 @@ const copy = {
     bound: "已绑定 Tidal",
     notBound: "Tidal 未绑定",
     unbind: "解绑",
+    unbindAccount: "解绑账号",
     unbindConfirm: "要解绑当前 Tidal 账号吗？之后可以重新绑定其他账号。",
+    core: "核心",
+    optional: "可选",
     step1: "步骤 1",
     step2: "步骤 2",
-    step3: "步骤 3",
     checkChain: "检查环境",
-    checkChainCopy: "应用需要本地工具和 streamrip 兼容配置，然后才能绑定 Tidal。",
+    checkChainCopy: "核心工具就绪后才能进入下载台；可选工具只影响封面或元数据增强。",
     bindTidal: "绑定 Tidal",
     bindTidalCopy: "打开 Tidal 官方授权页。你在那里登录，本应用不会看到你的密码。",
     startBinding: "开始绑定 Tidal",
-    confirmToken: "确认 token",
-    confirmTokenCopy: "授权后，本页面会自动检测 token，并解锁下载台。",
-    waitingBinding: "等待绑定。",
+    accountSettings: "账号",
+    checkStreamrip: "核心下载工具，用来管理兼容 Tidal 的下载配置。",
+    checkFfmpeg: "核心音频处理工具，用来合并音频并写出 FLAC 文件。",
+    checkMetaflac: "可选元数据工具，用来把封面嵌入 FLAC 文件。",
+    checkConfig: "核心本地配置文件，用来安全保存 Tidal 授权。",
+    installMissing: "安装缺失工具",
+    installingTools: "正在安装缺失工具...",
+    installComplete: "工具安装完成，正在重新检查环境...",
+    installFailed: "工具安装失败。",
+    notFound: "未找到",
     download: "下载",
     pasteUrls: "粘贴 Tidal 链接",
     outputFolder: "输出目录",
@@ -109,6 +140,12 @@ const copy = {
     creatingLink: "正在创建 Tidal 授权链接...",
     opened: "已打开",
     status: "状态",
+    bindingWait: "正在绑定 Tidal，请勿刷新页面。",
+    bindingPending: "等待 Tidal 授权中，请保持本页面打开。",
+    bindingSuccess: "Tidal 绑定成功，正在进入工作台...",
+    bindingFailed: "Tidal 绑定失败，请重新开始。",
+    bindingExpired: "Tidal 绑定已过期，请重新开始。",
+    authLinkHelp: "点击进入授权页面",
     pasteAtLeastOne: "请至少粘贴一个 Tidal 链接。",
     fetching: "抓取中",
     fetched: "抓取成功",
@@ -121,6 +158,17 @@ const copy = {
 
 function t(key) {
   return copy[state.language][key] || copy.en[key] || key;
+}
+
+function showToast(message, tone = "info", autoHideMs = 0) {
+  els.toast.textContent = message;
+  els.toast.className = `toast ${tone}`;
+  if (state.toastTimer) clearTimeout(state.toastTimer);
+  if (autoHideMs > 0) {
+    state.toastTimer = setTimeout(() => {
+      els.toast.classList.add("hidden");
+    }, autoHideMs);
+  }
 }
 
 function applyLanguage() {
@@ -136,8 +184,33 @@ function applyLanguage() {
   }
 }
 
-function checkRow(label, ok, detail) {
-  return `<div class="check"><strong>${label}</strong><br><span class="${ok ? "ok" : "bad"}">${ok ? t("ready") : t("missing")}</span> ${detail || ""}</div>`;
+function checkRow({ label, ok, detail, description, required }) {
+  const stateClass = ok ? "ok" : required ? "bad" : "warn";
+  const stateText = ok ? t("ready") : t("missing");
+  const requirement = required ? t("core") : t("optional");
+  return `
+    <div class="check ${required ? "required" : "optional"}">
+      <div class="check-head">
+        <strong>${label}</strong>
+        <span class="check-pill">${requirement}</span>
+      </div>
+      <p>${description}</p>
+      <span class="${stateClass}">${stateText}</span> ${detail || ""}
+    </div>
+  `;
+}
+
+function hasCoreSetup() {
+  return Boolean(
+    state.setup?.tools?.streamrip &&
+      state.setup?.tools?.ffmpeg &&
+      state.setup?.streamrip_config?.exists,
+  );
+}
+
+function missingInstallableTools() {
+  if (!state.setup) return [];
+  return ["streamrip", "ffmpeg", "metaflac"].filter((tool) => !state.setup.tools?.[tool]);
 }
 
 async function refreshSetup() {
@@ -150,44 +223,118 @@ async function refreshSetup() {
 
 function renderChecks() {
   els.checks.innerHTML = [
-    checkRow("ffmpeg", state.setup.tools.ffmpeg, "required for FLAC output"),
-    checkRow("metaflac", state.setup.tools.metaflac, "required for embedded covers"),
-    checkRow("streamrip config", state.setup.streamrip_config.exists, state.setup.streamrip_config.path),
-    checkRow("Tidal token", state.setup.tidal.bound, state.setup.tidal.country_code || "not bound"),
+    checkRow({
+      label: "streamrip",
+      ok: state.setup.tools.streamrip,
+      detail: state.setup.tools.streamrip ? "" : t("notFound"),
+      description: t("checkStreamrip"),
+      required: true,
+    }),
+    checkRow({
+      label: "ffmpeg",
+      ok: state.setup.tools.ffmpeg,
+      detail: state.setup.tools.ffmpeg ? "" : t("notFound"),
+      description: t("checkFfmpeg"),
+      required: true,
+    }),
+    checkRow({
+      label: "metaflac",
+      ok: state.setup.tools.metaflac,
+      detail: state.setup.tools.metaflac ? "" : t("notFound"),
+      description: t("checkMetaflac"),
+      required: false,
+    }),
+    checkRow({
+      label: "streamrip config",
+      ok: state.setup.streamrip_config.exists,
+      detail: state.setup.streamrip_config.path,
+      description: t("checkConfig"),
+      required: true,
+    }),
   ].join("");
+  els.installToolsButton.classList.toggle("hidden", missingInstallableTools().length === 0);
 }
 
 function renderMode() {
   const bound = Boolean(state.setup?.tidal?.bound);
-  els.boundStatus.textContent = bound
-    ? `${t("bound")} (${state.setup.tidal.country_code})`
-    : t("notBound");
-  els.setupPanel.classList.toggle("hidden", bound);
-  els.workspace.classList.toggle("hidden", !bound);
-  els.unbindButton.classList.toggle("hidden", !bound);
+  const coreReady = hasCoreSetup();
+  const canOpenWorkspace = bound && coreReady;
+  els.setupPanel.classList.toggle("hidden", canOpenWorkspace);
+  els.workspace.classList.toggle("hidden", !canOpenWorkspace);
+  els.accountControl.classList.toggle("hidden", !bound);
+  if (bound) {
+    els.workspaceAccountButton.textContent = `${t("bound")} (${state.setup.tidal.country_code})`;
+  } else if (!state.authSession) {
+    els.workspaceAccountButton.textContent = t("accountSettings");
+  }
+  closeAccountMenu();
 }
 
 async function startBinding() {
   els.bindButton.disabled = true;
   els.bindMessage.textContent = t("creatingLink");
-  const response = await fetch("/api/auth/tidal/start", { method: "POST" });
-  state.authSession = await response.json();
-  els.bindMessage.innerHTML = `${t("opened")} <a href="${state.authSession.url}" target="_blank" rel="noreferrer">${state.authSession.url}</a>`;
-  window.open(state.authSession.url, "_blank", "noopener,noreferrer");
-  pollBinding();
+  showToast(t("bindingWait"), "info");
+  try {
+    const response = await fetch("/api/auth/tidal/start", { method: "POST" });
+    state.authSession = await response.json();
+    state.authStatus = t("bindingWait");
+    renderAuthMessage();
+    window.open(state.authSession.url, "_blank", "noopener,noreferrer");
+    pollBinding();
+  } catch (error) {
+    els.bindButton.disabled = false;
+    els.bindMessage.textContent = error.message;
+    showToast(t("bindingFailed"), "error", 5000);
+  }
+}
+
+function renderAuthMessage() {
+  if (!state.authSession?.url) {
+    els.bindMessage.textContent = state.authStatus || "";
+    return;
+  }
+  els.bindMessage.innerHTML = `
+    <a href="${state.authSession.url}" target="_blank" rel="noreferrer">${t("authLinkHelp")}</a>
+    <span>${state.authStatus}</span>
+  `;
 }
 
 async function pollBinding() {
   if (!state.authSession) return;
-  const response = await fetch(`/api/auth/tidal/status/${state.authSession.session_id}`);
-  const data = await response.json();
-  els.tokenMessage.textContent = `${t("status")}: ${data.status}`;
+  let data;
+  try {
+    const response = await fetch(`/api/auth/tidal/status/${state.authSession.session_id}`);
+    data = await response.json();
+  } catch (error) {
+    els.bindButton.disabled = false;
+    els.bindMessage.textContent = error.message;
+    showToast(t("bindingFailed"), "error", 5000);
+    return;
+  }
+  state.authStatus = `${t("status")}: ${data.status}`;
+  renderAuthMessage();
   if (data.status === "success") {
+    showToast(t("bindingSuccess"), "success", 2400);
     await refreshSetup();
     els.bindButton.disabled = false;
     return;
   }
-  if (data.status === "expired" || data.status === "error") {
+  if (data.status === "pending") {
+    state.authStatus = t("bindingPending");
+    renderAuthMessage();
+    showToast(t("bindingPending"), "info");
+  }
+  if (data.status === "expired") {
+    state.authStatus = t("bindingExpired");
+    renderAuthMessage();
+    showToast(t("bindingExpired"), "error", 5000);
+    els.bindButton.disabled = false;
+    return;
+  }
+  if (data.status === "error" || data.status === "missing") {
+    state.authStatus = data.message || t("bindingFailed");
+    renderAuthMessage();
+    showToast(data.message || t("bindingFailed"), "error", 5000);
     els.bindButton.disabled = false;
     return;
   }
@@ -272,17 +419,75 @@ async function startDownload() {
   };
 }
 
+function addInstallLog(line) {
+  els.installLog.classList.remove("hidden");
+  const row = document.createElement("div");
+  row.textContent = line;
+  els.installLog.append(row);
+  els.installLog.scrollTop = els.installLog.scrollHeight;
+}
+
+async function installMissingTools() {
+  els.installToolsButton.disabled = true;
+  els.installLog.innerHTML = "";
+  addInstallLog(t("installingTools"));
+  showToast(t("installingTools"), "info");
+  const response = await fetch("/api/tools/install", { method: "POST" });
+  const job = await response.json();
+  if (state.installEventSource) state.installEventSource.close();
+  state.installEventSource = new EventSource(`/api/tools/install/${job.job_id}/events`);
+  state.installEventSource.onmessage = async (message) => {
+    const event = JSON.parse(message.data);
+    addInstallLog(event.message || event.stage);
+    if (event.stage === "complete") {
+      state.installEventSource.close();
+      els.installToolsButton.disabled = false;
+      showToast(t("installComplete"), "success", 3500);
+      await refreshSetup();
+    }
+    if (event.stage === "failed") {
+      state.installEventSource.close();
+      els.installToolsButton.disabled = false;
+      showToast(event.message || t("installFailed"), "error", 5000);
+      await refreshSetup();
+    }
+  };
+}
+
 async function unbindTidal() {
   if (!confirm(t("unbindConfirm"))) return;
+  closeAccountMenu();
   await fetch("/api/auth/tidal/unbind", { method: "POST" });
   els.events.innerHTML = "";
   els.openFolder.classList.add("hidden");
   await refreshSetup();
 }
 
+function closeAccountMenu() {
+  els.accountDropdown.classList.add("hidden");
+  els.workspaceAccountButton.setAttribute("aria-expanded", "false");
+}
+
+function toggleAccountMenu() {
+  if (!state.setup?.tidal?.bound) return;
+  const isOpen = !els.accountDropdown.classList.contains("hidden");
+  els.accountDropdown.classList.toggle("hidden", isOpen);
+  els.workspaceAccountButton.setAttribute("aria-expanded", String(!isOpen));
+}
+
 els.bindButton.addEventListener("click", startBinding);
 els.downloadButton.addEventListener("click", startDownload);
+els.installToolsButton.addEventListener("click", installMissingTools);
+els.workspaceAccountButton.addEventListener("click", toggleAccountMenu);
 els.unbindButton.addEventListener("click", unbindTidal);
+document.addEventListener("click", (event) => {
+  if (!els.workspaceAccountButton.contains(event.target) && !els.accountDropdown.contains(event.target)) {
+    closeAccountMenu();
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeAccountMenu();
+});
 els.langEn.addEventListener("click", () => {
   state.language = "en";
   localStorage.setItem("language", state.language);
@@ -310,6 +515,6 @@ els.openFolder.addEventListener("click", async () => {
   });
 });
 refreshSetup().catch((error) => {
-  els.boundStatus.textContent = `Startup failed: ${error.message}`;
+  els.bindMessage.textContent = `Startup failed: ${error.message}`;
 });
 applyLanguage();

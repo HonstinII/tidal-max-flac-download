@@ -50,20 +50,21 @@ textarea {
 .output-actions {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .language-switch {
   display: flex;
   border: 1px solid var(--line);
   background: var(--panel-2);
+  min-height: 42px;
 }
 
 .lang-button {
   border: 0;
   background: transparent;
   color: var(--muted);
-  min-height: 38px;
+  min-height: 40px;
   padding: 0 12px;
   cursor: pointer;
 }
@@ -116,10 +117,31 @@ h2 {
   gap: 16px;
 }
 
+.setup-panel {
+  grid-template-columns: minmax(320px, 1.05fr) minmax(320px, 0.95fr);
+}
+
 .check-list,
 .events {
   display: grid;
   gap: 10px;
+}
+
+.install-button {
+  margin-top: 14px;
+}
+
+.install-log {
+  margin-top: 12px;
+  max-height: 180px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  background: #0e1210;
+  color: var(--muted);
+  padding: 10px 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .check,
@@ -128,6 +150,31 @@ h2 {
   background: var(--panel-2);
   padding: 12px 14px;
   color: var(--muted);
+}
+
+.check {
+  display: grid;
+  gap: 7px;
+}
+
+.check p {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.check-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.check-pill {
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+  padding: 3px 7px;
+  text-transform: uppercase;
 }
 
 .check strong,
@@ -141,6 +188,10 @@ h2 {
 
 .bad {
   color: var(--error);
+}
+
+.warn {
+  color: var(--amber);
 }
 
 .primary-button {
@@ -157,7 +208,7 @@ h2 {
   border: 1px solid var(--line);
   background: #111714;
   color: var(--text);
-  min-height: 40px;
+  min-height: 42px;
   padding: 0 12px;
   cursor: pointer;
 }
@@ -168,7 +219,6 @@ h2 {
 }
 
 .message,
-.bound-status,
 .status-light {
   color: var(--muted);
   border: 1px solid var(--line);
@@ -176,10 +226,84 @@ h2 {
   padding: 10px 12px;
 }
 
+.message a {
+  color: var(--meter);
+}
+
+.message span {
+  display: block;
+  margin-top: 6px;
+}
+
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  max-width: min(420px, calc(100vw - 48px));
+  border: 1px solid var(--line);
+  background: #111714;
+  color: var(--text);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.36);
+  padding: 14px 16px;
+  line-height: 1.45;
+}
+
+.toast.info {
+  border-color: color-mix(in srgb, var(--meter) 48%, var(--line));
+}
+
+.toast.success {
+  border-color: var(--meter);
+}
+
+.toast.error {
+  border-color: var(--error);
+}
+
+.account-control {
+  position: relative;
+}
+
+.account-dropdown {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 8px);
+  z-index: 10;
+  min-width: 160px;
+  border: 1px solid var(--line);
+  background: #111714;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  padding: 6px;
+}
+
+.account-dropdown button {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.account-dropdown button:hover,
+.account-dropdown button:focus-visible {
+  background: var(--panel-2);
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
   gap: 16px;
+}
+
+.workspace-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .hidden {
@@ -242,9 +366,14 @@ input[type="number"] {
 @media (max-width: 860px) {
   .grid,
   .workspace,
+  .setup-panel,
   .controls,
   .topbar {
     grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .workspace-head {
     display: grid;
   }
 }

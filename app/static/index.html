@@ -18,8 +18,14 @@
             <button id="langEn" type="button" class="lang-button active">EN</button>
             <button id="langZh" type="button" class="lang-button">中文</button>
           </div>
-          <div id="boundStatus" class="bound-status">Checking binding...</div>
-          <button id="unbindButton" type="button" class="secondary-button hidden" data-i18n="unbind">Unbind</button>
+          <div id="accountControl" class="account-control hidden">
+            <button id="workspaceAccountButton" type="button" class="secondary-button" data-i18n="accountSettings">
+              Account
+            </button>
+            <div id="accountDropdown" class="account-dropdown hidden" role="menu">
+              <button id="unbindButton" type="button" role="menuitem" data-i18n="unbindAccount">Unbind account</button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -28,10 +34,14 @@
           <p class="section-kicker" data-i18n="step1">Step 1</p>
           <h2 data-i18n="checkChain">Check the chain</h2>
           <p class="muted" data-i18n="checkChainCopy">
-            The app needs local tools and a streamrip-compatible config before it
-            can bind Tidal.
+            Core tools must be ready before the downloader opens. Optional tools
+            only affect cover or metadata extras.
           </p>
           <div id="checks" class="check-list"></div>
+          <button id="installToolsButton" type="button" class="secondary-button install-button hidden" data-i18n="installMissing">
+            Install missing tools
+          </button>
+          <div id="installLog" class="install-log hidden"></div>
         </div>
 
         <div>
@@ -44,23 +54,15 @@
           <button id="bindButton" class="primary-button" data-i18n="startBinding">Start Tidal binding</button>
           <div id="bindMessage" class="message"></div>
         </div>
-
-        <div>
-          <p class="section-kicker" data-i18n="step3">Step 3</p>
-          <h2 data-i18n="confirmToken">Confirm token</h2>
-          <p class="muted" data-i18n="confirmTokenCopy">
-            After authorization, this page automatically detects the token and
-            unlocks the downloader.
-          </p>
-          <div id="tokenMessage" class="message" data-i18n="waitingBinding">Waiting for binding.</div>
-        </div>
       </section>
 
       <section id="workspace" class="workspace hidden">
         <section class="panel input-panel">
-          <div>
-            <p class="section-kicker" data-i18n="download">Download</p>
-            <h2 data-i18n="pasteUrls">Paste Tidal URLs</h2>
+          <div class="workspace-head">
+            <div>
+              <p class="section-kicker" data-i18n="download">Download</p>
+              <h2 data-i18n="pasteUrls">Paste Tidal URLs</h2>
+            </div>
           </div>
           <textarea id="urlInput" spellcheck="false" placeholder="https://tidal.com/track/526130766/u&#10;https://tidal.com/album/523643849/u"></textarea>
           <div class="controls">
@@ -106,6 +108,7 @@
         </section>
       </section>
     </main>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
     <script src="/static/app.js"></script>
   </body>
 </html>

@@ -1,13 +1,18 @@
 import time
 
+from requests.exceptions import JSONDecodeError
+
 from app.tidal_auth import TidalAuthManager
 
 
 class FakeResponse:
-    def __init__(self, payload):
+    def __init__(self, payload, status_code=200):
         self.payload = payload
+        self.status_code = status_code
 
     def json(self):
+        if isinstance(self.payload, Exception):
+            raise self.payload
         return self.payload
 
     def raise_for_status(self):
@@ -51,6 +56,38 @@ def test_poll_pending_returns_pending_status():
 
     assert result.status == "pending"
     assert result.token is None
+
+
+def test_poll_oauth_pending_returns_pending_status():
+    session = FakeSession(
+        [
+            {"deviceCode": "device-1", "verificationUriComplete": "link.tidal.com/ABCDE"},
+            {"error": "authorization_pending"},
+        ]
+    )
+    manager = TidalAuthManager(session=session)
+    auth_session = manager.start()
+
+    result = manager.poll(auth_session.session_id)
+
+    assert result.status == "pending"
+    assert result.token is None
+
+
+def test_poll_non_json_response_returns_error_status():
+    session = FakeSession(
+        [
+            {"deviceCode": "device-1", "verificationUriComplete": "link.tidal.com/ABCDE"},
+            JSONDecodeError("Expecting value", "", 0),
+        ]
+    )
+    manager = TidalAuthManager(session=session)
+    auth_session = manager.start()
+
+    result = manager.poll(auth_session.session_id)
+
+    assert result.status == "error"
+    assert "non-JSON" in result.message
 
 
 def test_poll_success_maps_tidal_token():

@@ -9,6 +9,7 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 
 brew install ffmpeg flac
+python3 -m pip install --user streamrip
 
 python3 -m venv .venv
 .venv/bin/pip install --upgrade pip

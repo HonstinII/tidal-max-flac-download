@@ -17,8 +17,8 @@ def test_streamrip_config_path_uses_macos_application_support():
 
 def test_tool_status_reports_boolean_values(monkeypatch):
     def fake_which(name):
-        return "/usr/bin/ffmpeg" if name == "ffmpeg" else None
+        return "/usr/bin/tool" if name in {"rip", "ffmpeg"} else None
 
     monkeypatch.setattr("app.config.shutil.which", fake_which)
 
-    assert tool_status() == {"ffmpeg": True, "metaflac": False}
+    assert tool_status() == {"streamrip": True, "ffmpeg": True, "metaflac": False}

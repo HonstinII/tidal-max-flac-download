@@ -5,14 +5,15 @@ from dataclasses import dataclass
 from typing import Callable
 
 import requests
+from requests.exceptions import JSONDecodeError, RequestException
 from requests.auth import HTTPBasicAuth
 
 from .tidal_config import TidalToken
 
 AUTH_URL = "https://auth.tidal.com/v1/oauth2"
-CLIENT_ID = base64.b64decode("elU0WEhWVmtjMnREUG80dA==").decode("iso-8859-1")
+CLIENT_ID = base64.b64decode("ZlgySnhkbW50WldLMGl4VA==").decode("iso-8859-1")
 CLIENT_SECRET = base64.b64decode(
-    "VkpLaERGcUpQcXZzUFZOQlY2dWtYVEptd2x2YnR0UDd3bE1scmM3MnNlND0="
+    "MU5tNUFmREFqeHJnSkZKYktOV0xlQXlLR1ZHbUlOdVhQUExIVlhBdnhBZz0="
 ).decode("iso-8859-1")
 AUTH = HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
 
@@ -71,21 +72,35 @@ class TidalAuthManager:
         if self.clock() - session.created_at > session.expires_in:
             return AuthPollResult(status="expired", message="Authorization expired.")
 
-        response = self.session.post(
-            f"{AUTH_URL}/token",
-            data={
-                "client_id": CLIENT_ID,
-                "device_code": session.device_code,
-                "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
-                "scope": "r_usr+w_usr+w_sub",
-            },
-            auth=AUTH,
-            timeout=30,
-        )
-        payload = response.json()
+        try:
+            response = self.session.post(
+                f"{AUTH_URL}/token",
+                data={
+                    "client_id": CLIENT_ID,
+                    "device_code": session.device_code,
+                    "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+                    "scope": "r_usr+w_usr+w_sub",
+                },
+                auth=AUTH,
+                timeout=30,
+            )
+            payload = response.json()
+        except JSONDecodeError:
+            status_code = getattr(response, "status_code", "unknown")
+            return AuthPollResult(
+                status="error",
+                message=f"Tidal returned a non-JSON auth response. HTTP status: {status_code}.",
+            )
+        except RequestException as exc:
+            return AuthPollResult(status="error", message=str(exc))
+        oauth_error = str(payload.get("error") or "")
+        if oauth_error in {"authorization_pending", "slow_down"}:
+            return AuthPollResult(status="pending")
         if "status" in payload and payload["status"] != 200:
             if payload["status"] == 400 and payload.get("sub_status") == 1002:
                 return AuthPollResult(status="pending")
+            return AuthPollResult(status="error", message=str(payload))
+        if "access_token" not in payload:
             return AuthPollResult(status="error", message=str(payload))
 
         return AuthPollResult(

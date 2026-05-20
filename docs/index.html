@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tidal Max FLAC Studio</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101312;
+        --panel: #181e1b;
+        --line: #334039;
+        --text: #eef3ed;
+        --muted: #aab6ac;
+        --accent: #46d59f;
+        --amber: #e1a64b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(135deg, rgba(70, 213, 159, 0.08), transparent 36%),
+          radial-gradient(circle at 80% 12%, rgba(225, 166, 75, 0.12), transparent 28%),
+          var(--bg);
+        color: var(--text);
+        font-family: Avenir Next, Avenir, Helvetica Neue, sans-serif;
+      }
+
+      main {
+        width: min(1080px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 56px 0;
+      }
+
+      .eyebrow {
+        color: var(--amber);
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 780px;
+        margin: 12px 0 18px;
+        font-size: clamp(40px, 7vw, 82px);
+        line-height: 0.95;
+        letter-spacing: 0;
+      }
+
+      p {
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .lead {
+        max-width: 760px;
+        font-size: 18px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 28px 0 34px;
+      }
+
+      a.button {
+        border: 1px solid var(--line);
+        background: #111714;
+        color: var(--text);
+        min-height: 44px;
+        padding: 11px 16px;
+        text-decoration: none;
+      }
+
+      a.primary {
+        border: 0;
+        background: var(--accent);
+        color: #07110d;
+        font-weight: 700;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--panel) 92%, black);
+        padding: 18px;
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 20px;
+      }
+
+      code {
+        color: var(--accent);
+      }
+
+      @media (max-width: 780px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">Local Tidal workstation</div>
+      <h1>Tidal Max FLAC Studio</h1>
+      <p class="lead">
+        A local web UI built around streamrip for personal offline listening:
+        Tidal binding, Max/Hi-Res FLAC downloads, cover embedding, lyrics
+        tagging, output folder controls, and a guided setup flow.
+      </p>
+      <div class="actions">
+        <a class="button primary" href="../">View repository</a>
+        <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
+      </div>
+      <section class="grid">
+        <article class="card">
+          <h2>Core</h2>
+          <p>
+            The core downloading foundation is
+            <a href="https://github.com/nathom/streamrip">streamrip</a>, created
+            by <code>nathom</code>. This project builds a local studio workflow
+            around that tool.
+          </p>
+        </article>
+        <article class="card">
+          <h2>Integrated</h2>
+          <p>
+            The app adds guided Tidal binding, one-click missing tool setup,
+            Tidal URL queues, cover embedding, lyrics tagging, and Finder output
+            controls.
+          </p>
+        </article>
+        <article class="card">
+          <h2>Local first</h2>
+          <p>
+            GitHub Pages is only this static project page. The downloader itself
+            runs locally because it needs your local tools, tokens, and files.
+          </p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

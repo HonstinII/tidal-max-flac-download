@@ -12,6 +12,7 @@ from .tidal_auth import TidalAuthManager
 from .tidal_config import clear_tidal_auth, write_tidal_auth
 from .jobs import DownloadJobManager, JobOptions
 from .folders import open_folder, pick_folder
+from .installer import InstallJobManager
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
@@ -20,6 +21,7 @@ app = FastAPI(title="Tidal Max FLAC Studio")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 auth_manager = TidalAuthManager()
 job_manager = DownloadJobManager()
+install_manager = InstallJobManager()
 
 
 class JobRequest(BaseModel):
@@ -48,6 +50,21 @@ def health():
 @app.get("/api/setup/status")
 def get_setup_status():
     return setup_status()
+
+
+@app.post("/api/tools/install")
+def install_missing_tools():
+    job = install_manager.create_job(setup_status()["tools"])
+    install_manager.start_job(job.job_id)
+    return {"job_id": job.job_id, "status": job.status}
+
+
+@app.get("/api/tools/install/{job_id}/events")
+def get_install_events(job_id: str):
+    return StreamingResponse(
+        install_manager.events(job_id),
+        media_type="text/event-stream",
+    )
 
 
 @app.post("/api/auth/tidal/start")

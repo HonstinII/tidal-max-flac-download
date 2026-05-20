@@ -26,7 +26,11 @@ def default_config() -> AppConfig:
 
 
 def tool_status() -> dict[str, bool]:
+    streamrip_venv = Path.home() / "Applications/streamrip-dev/bin/rip"
     return {
+        "streamrip": shutil.which("rip") is not None
+        or shutil.which("streamrip") is not None
+        or streamrip_venv.exists(),
         "ffmpeg": shutil.which("ffmpeg") is not None,
         "metaflac": shutil.which("metaflac") is not None,
     }
