@@ -10,6 +10,7 @@ const els = {
   langEn: document.querySelector("#langEn"),
   langZh: document.querySelector("#langZh"),
   boundStatus: document.querySelector("#boundStatus"),
+  unbindButton: document.querySelector("#unbindButton"),
   setupPanel: document.querySelector("#setupPanel"),
   workspace: document.querySelector("#workspace"),
   checks: document.querySelector("#checks"),
@@ -36,6 +37,8 @@ const copy = {
     checkingBinding: "Checking binding...",
     bound: "Bound to Tidal",
     notBound: "Tidal not bound",
+    unbind: "Unbind",
+    unbindConfirm: "Unbind this Tidal account? You can bind a different account afterward.",
     step1: "Step 1",
     step2: "Step 2",
     step3: "Step 3",
@@ -77,6 +80,8 @@ const copy = {
     checkingBinding: "正在检查绑定...",
     bound: "已绑定 Tidal",
     notBound: "Tidal 未绑定",
+    unbind: "解绑",
+    unbindConfirm: "要解绑当前 Tidal 账号吗？之后可以重新绑定其他账号。",
     step1: "步骤 1",
     step2: "步骤 2",
     step3: "步骤 3",
@@ -159,6 +164,7 @@ function renderMode() {
     : t("notBound");
   els.setupPanel.classList.toggle("hidden", bound);
   els.workspace.classList.toggle("hidden", !bound);
+  els.unbindButton.classList.toggle("hidden", !bound);
 }
 
 async function startBinding() {
@@ -266,8 +272,17 @@ async function startDownload() {
   };
 }
 
+async function unbindTidal() {
+  if (!confirm(t("unbindConfirm"))) return;
+  await fetch("/api/auth/tidal/unbind", { method: "POST" });
+  els.events.innerHTML = "";
+  els.openFolder.classList.add("hidden");
+  await refreshSetup();
+}
+
 els.bindButton.addEventListener("click", startBinding);
 els.downloadButton.addEventListener("click", startDownload);
+els.unbindButton.addEventListener("click", unbindTidal);
 els.langEn.addEventListener("click", () => {
   state.language = "en";
   localStorage.setItem("language", state.language);

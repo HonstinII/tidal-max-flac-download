@@ -66,3 +66,23 @@ def write_tidal_auth(path: Path, token: TidalToken) -> None:
 
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(tomlkit.dumps(doc), encoding="utf-8")
+
+
+def clear_tidal_auth(path: Path) -> None:
+    if path.exists():
+        doc = tomlkit.parse(path.read_text(encoding="utf-8"))
+    else:
+        doc = tomlkit.document()
+
+    if "tidal" not in doc or not isinstance(doc["tidal"], dict):
+        doc["tidal"] = tomlkit.table()
+
+    tidal = doc["tidal"]
+    tidal["user_id"] = ""
+    tidal["country_code"] = ""
+    tidal["access_token"] = ""
+    tidal["refresh_token"] = ""
+    tidal["token_expiry"] = ""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(tomlkit.dumps(doc), encoding="utf-8")

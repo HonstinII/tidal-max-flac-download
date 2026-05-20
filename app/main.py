@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from .config import setup_status
 from .config import default_config
 from .tidal_auth import TidalAuthManager
-from .tidal_config import write_tidal_auth
+from .tidal_config import clear_tidal_auth, write_tidal_auth
 from .jobs import DownloadJobManager, JobOptions
 from .folders import open_folder, pick_folder
 
@@ -76,6 +76,12 @@ def get_tidal_auth_status(session_id: str):
         if result.token
         else None,
     }
+
+
+@app.post("/api/auth/tidal/unbind")
+def unbind_tidal_auth():
+    clear_tidal_auth(default_config().streamrip_config)
+    return {"ok": True}
 
 
 @app.post("/api/jobs")

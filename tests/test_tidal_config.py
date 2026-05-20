@@ -1,6 +1,11 @@
 from pathlib import Path
 
-from app.tidal_config import TidalToken, read_tidal_auth, write_tidal_auth
+from app.tidal_config import (
+    TidalToken,
+    clear_tidal_auth,
+    read_tidal_auth,
+    write_tidal_auth,
+)
 
 
 def test_missing_config_returns_unbound_state(tmp_path):
@@ -78,3 +83,37 @@ def test_write_tidal_auth_preserves_unrelated_config(tmp_path):
     assert 'access_token = "new-access"' in text
     assert 'refresh_token = "new-refresh"' in text
     assert "token_expiry = 1234.5" in text
+
+
+def test_clear_tidal_auth_preserves_quality_and_unrelated_config(tmp_path):
+    config = tmp_path / "config.toml"
+    config.write_text(
+        "\n".join(
+            [
+                "[downloads]",
+                'folder = "/tmp/music"',
+                "",
+                "[tidal]",
+                "quality = 3",
+                'user_id = "42"',
+                'country_code = "GB"',
+                'access_token = "new-access"',
+                'refresh_token = "new-refresh"',
+                "token_expiry = 1234.5",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    clear_tidal_auth(config)
+
+    text = config.read_text(encoding="utf-8")
+    state = read_tidal_auth(config)
+    assert state.bound is False
+    assert 'folder = "/tmp/music"' in text
+    assert "quality = 3" in text
+    assert 'user_id = ""' in text
+    assert 'country_code = ""' in text
+    assert 'access_token = ""' in text
+    assert 'refresh_token = ""' in text
+    assert 'token_expiry = ""' in text
