@@ -11,6 +11,7 @@ from .config import default_config
 from .tidal_auth import TidalAuthManager
 from .tidal_config import write_tidal_auth
 from .jobs import DownloadJobManager, JobOptions
+from .folders import open_folder, pick_folder
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
@@ -26,7 +27,12 @@ class JobRequest(BaseModel):
     output_dir: str | None = None
     concurrency: int = 10
     embed_covers: bool = True
+    embed_lyrics: bool = True
     skip_existing: bool = True
+
+
+class FolderRequest(BaseModel):
+    path: str | None = None
 
 
 @app.get("/")
@@ -78,6 +84,7 @@ def create_job(request: JobRequest):
         output_dir=Path(request.output_dir).expanduser() if request.output_dir else None,
         concurrency=request.concurrency,
         embed_covers=request.embed_covers,
+        embed_lyrics=request.embed_lyrics,
         skip_existing=request.skip_existing,
     )
     job = job_manager.create_job(request.urls, options)
@@ -99,3 +106,17 @@ def get_job_events(job_id: str):
         job_manager.events(job_id),
         media_type="text/event-stream",
     )
+
+
+@app.post("/api/folders/pick")
+def pick_output_folder(request: FolderRequest):
+    initial = Path(request.path).expanduser() if request.path else default_config().output_dir
+    selected = pick_folder(initial)
+    return {"path": str(selected) if selected else None}
+
+
+@app.post("/api/folders/open")
+def open_output_folder(request: FolderRequest):
+    path = Path(request.path).expanduser() if request.path else default_config().output_dir
+    open_folder(path)
+    return {"ok": True, "path": str(path)}

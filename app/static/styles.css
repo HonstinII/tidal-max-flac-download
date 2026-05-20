@@ -125,6 +125,15 @@ h2 {
   font-weight: 700;
 }
 
+.secondary-button {
+  border: 1px solid var(--line);
+  background: #111714;
+  color: var(--text);
+  min-height: 40px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
 .primary-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -182,6 +191,12 @@ input[type="number"] {
   background: #0e1210;
   color: var(--text);
   padding: 0 11px;
+}
+
+.folder-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
 }
 
 .toggle {

@@ -70,6 +70,8 @@ Output defaults to:
 
 The app requests Tidal `HI_RES` playback and requires a FLAC DASH representation. It does not silently save AAC when FLAC is unavailable.
 
+The download workspace can open the output folder picker and open the selected folder in Finder. It can also embed available Tidal lyrics into the FLAC `LYRICS` tag.
+
 ## Troubleshooting
 
 If binding expires, generate a new Tidal link from the setup screen.

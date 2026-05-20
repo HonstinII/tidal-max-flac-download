@@ -95,9 +95,18 @@ def download_track_as_flac(
     output = build_output_path(track, options.output_dir)
     output.parent.mkdir(parents=True, exist_ok=True)
     if options.skip_existing and output.exists() and output.stat().st_size > 1024 * 1024:
-        emit({"stage": "skipped", "track_id": track.track_id, "path": str(output)})
+        emit(
+            {
+                "stage": "skipped",
+                "track_id": track.track_id,
+                "path": str(output),
+                "title": track.title,
+                "artist": track.artist,
+            }
+        )
         return DownloadResult(track.track_id, output, "skipped")
 
+    emit({"stage": "downloading", "track_id": track.track_id, "title": track.title, "artist": track.artist})
     with tempfile.TemporaryDirectory(prefix="tidal-max-") as tmp:
         tmp_path = Path(tmp)
         urls = list(enumerate([manifest.initialization_url, *manifest.segment_urls]))
@@ -142,7 +151,7 @@ def download_track_as_flac(
             cmd[-1:-1] = ["-metadata", f"date={track.album_year}"]
         subprocess.run(cmd, check=True)
 
-    emit({"stage": "complete", "track_id": track.track_id, "path": str(output)})
+    emit({"stage": "downloaded", "track_id": track.track_id, "path": str(output), "title": track.title, "artist": track.artist})
     return DownloadResult(track.track_id, output, "complete")
 
 

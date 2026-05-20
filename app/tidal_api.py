@@ -6,6 +6,7 @@ import requests
 from .tidal_config import TidalAuthState
 
 BASE_URL = "https://api.tidalhifi.com/v1"
+LYRICS_URL = "https://api.tidal.com/v1"
 TIDAL_URL_RE = re.compile(r"tidal\.com/(album|track)/(\d+)")
 
 
@@ -68,6 +69,20 @@ class TidalApi:
         )
         response.raise_for_status()
         return response.json()
+
+    def get_lyrics(self, track_id: str) -> str:
+        response = self.session.get(
+            f"{LYRICS_URL}/tracks/{track_id}/lyrics",
+            headers={"authorization": f"Bearer {self.auth.access_token}"},
+            params={"countryCode": self.auth.country_code, "limit": 100},
+            timeout=30,
+        )
+        if response.status_code in {401, 404}:
+            return ""
+        response.raise_for_status()
+        from .lyrics import extract_lyrics_text
+
+        return extract_lyrics_text(response.json())
 
     def _track_item(
         self, track: dict, album: dict | None, track_number: int | None

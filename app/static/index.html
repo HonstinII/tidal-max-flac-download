@@ -59,7 +59,11 @@
           <div class="controls">
             <label>
               Output folder
-              <input id="outputDir" type="text" />
+              <span class="folder-row">
+                <input id="outputDir" type="text" />
+                <button id="pickFolder" type="button" class="secondary-button">Choose</button>
+                <button id="openFolder" type="button" class="secondary-button">Open</button>
+              </span>
             </label>
             <label>
               Segment concurrency
@@ -68,6 +72,10 @@
             <label class="toggle">
               <input id="embedCovers" type="checkbox" checked />
               Embed cover art
+            </label>
+            <label class="toggle">
+              <input id="embedLyrics" type="checkbox" checked />
+              Embed lyrics
             </label>
             <label class="toggle">
               <input id="skipExisting" type="checkbox" checked />

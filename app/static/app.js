@@ -14,8 +14,11 @@ const els = {
   tokenMessage: document.querySelector("#tokenMessage"),
   urlInput: document.querySelector("#urlInput"),
   outputDir: document.querySelector("#outputDir"),
+  pickFolder: document.querySelector("#pickFolder"),
+  openFolder: document.querySelector("#openFolder"),
   concurrency: document.querySelector("#concurrency"),
   embedCovers: document.querySelector("#embedCovers"),
+  embedLyrics: document.querySelector("#embedLyrics"),
   skipExisting: document.querySelector("#skipExisting"),
   downloadButton: document.querySelector("#downloadButton"),
   events: document.querySelector("#events"),
@@ -76,11 +79,39 @@ async function pollBinding() {
 }
 
 function addEvent(event) {
+  const display = toDisplayEvent(event);
+  if (!display) return;
   const row = document.createElement("div");
   row.className = "event";
-  const title = event.title ? ` ${event.artist || ""} - ${event.title}` : "";
-  row.innerHTML = `<strong>${event.stage}</strong>${title}<br>${event.message || event.path || event.url || ""}`;
+  const title = display.title ? ` ${display.title}` : "";
+  row.innerHTML = `<strong>${display.label}</strong>${title}<br>${display.detail || ""}`;
   els.events.prepend(row);
+}
+
+function toDisplayEvent(event) {
+  if (event.stage === "fetching" || event.stage === "resolving") {
+    return { label: "抓取中", detail: event.url };
+  }
+  if (event.stage === "fetched") {
+    return { label: "抓取成功", detail: `${event.count || 0} track(s)` };
+  }
+  if (event.stage === "downloading") {
+    return {
+      label: "下载中",
+      title: `${event.artist || ""} - ${event.title || event.track_id || ""}`.trim(),
+    };
+  }
+  if (event.stage === "downloaded" || event.stage === "skipped") {
+    return {
+      label: "下载完成",
+      title: `${event.artist || ""} - ${event.title || event.track_id || ""}`.trim(),
+      detail: event.path,
+    };
+  }
+  if (event.stage === "error" || event.stage === "failed") {
+    return { label: "下载失败", detail: event.message || event.url };
+  }
+  return null;
 }
 
 async function startDownload() {
@@ -102,6 +133,7 @@ async function startDownload() {
       output_dir: els.outputDir.value,
       concurrency: Number(els.concurrency.value || 10),
       embed_covers: els.embedCovers.checked,
+      embed_lyrics: els.embedLyrics.checked,
       skip_existing: els.skipExisting.checked,
     }),
   });
@@ -121,6 +153,22 @@ async function startDownload() {
 
 els.bindButton.addEventListener("click", startBinding);
 els.downloadButton.addEventListener("click", startDownload);
+els.pickFolder.addEventListener("click", async () => {
+  const response = await fetch("/api/folders/pick", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: els.outputDir.value }),
+  });
+  const data = await response.json();
+  if (data.path) els.outputDir.value = data.path;
+});
+els.openFolder.addEventListener("click", async () => {
+  await fetch("/api/folders/open", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: els.outputDir.value }),
+  });
+});
 refreshSetup().catch((error) => {
   els.boundStatus.textContent = `Startup failed: ${error.message}`;
 });

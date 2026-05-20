@@ -10,6 +10,8 @@ from typing import Iterable
 from .config import default_config
 from .covers import embed_cover
 from .downloader import DownloadOptions, download_track_as_flac, parse_flac_dash_manifest
+from .folders import open_folder, pick_folder
+from .lyrics import embed_lyrics
 from .tidal_api import TidalApi, parse_tidal_url
 from .tidal_config import read_tidal_auth
 
@@ -19,6 +21,7 @@ class JobOptions:
     output_dir: Path | None = None
     concurrency: int = 10
     embed_covers: bool = True
+    embed_lyrics: bool = True
     skip_existing: bool = True
 
 
@@ -77,8 +80,9 @@ class DownloadJobManager:
             for url in job.urls:
                 try:
                     ref = parse_tidal_url(url)
-                    self.emit(job_id, {"stage": "resolving", "url": url})
+                    self.emit(job_id, {"stage": "fetching", "url": url})
                     tracks = api.resolve(ref)
+                    self.emit(job_id, {"stage": "fetched", "url": url, "count": len(tracks)})
                     for track in tracks:
                         self.emit(
                             job_id,
@@ -89,6 +93,19 @@ class DownloadJobManager:
                                 "artist": track.artist,
                             },
                         )
+                        lyrics = ""
+                        if job.options.embed_lyrics:
+                            try:
+                                lyrics = api.get_lyrics(track.track_id)
+                            except Exception as error:
+                                self.emit(
+                                    job_id,
+                                    {
+                                        "stage": "lyrics_unavailable",
+                                        "track_id": track.track_id,
+                                        "message": str(error),
+                                    },
+                                )
                         playback = api.get(
                             f"tracks/{track.track_id}/playbackinfopostpaywall",
                             {
@@ -115,6 +132,9 @@ class DownloadJobManager:
                                 job_id,
                                 {"stage": "cover", "track_id": track.track_id},
                             )
+                        if job.options.embed_lyrics:
+                            if embed_lyrics(result.output_path, lyrics):
+                                self.emit(job_id, {"stage": "lyrics", "track_id": track.track_id})
                 except Exception as error:
                     self.emit(
                         job_id,
