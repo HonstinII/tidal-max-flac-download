@@ -1,6 +1,6 @@
 # Tidal Max FLAC Studio
 
-A local web app for binding a Tidal account and downloading Tidal track or album URLs as Max/Hi-Res FLAC files with embedded cover art and lyrics.
+A local desktop/web app for binding a Tidal account and downloading Tidal track or album URLs as Max/Hi-Res FLAC files with embedded cover art and lyrics.
 
 This app is designed for personal offline listening. It does not ask for or store your Tidal password. Binding happens through Tidal's official device authorization page.
 
@@ -8,16 +8,16 @@ This app is designed for personal offline listening. It does not ask for or stor
 
 The core downloader foundation is [streamrip](https://github.com/nathom/streamrip), created by [nathom](https://github.com/nathom).
 
-This project is a local studio wrapper around that foundation. The work here is to integrate the one-click local setup flow, Tidal binding, Max FLAC download workflow, cover embedding, lyrics tagging, output folder controls, bilingual UI, and a guided browser interface for the whole toolchain.
+This project is a local studio wrapper around that foundation. The work here is to integrate the one-click local setup flow, Tidal binding, Max FLAC download workflow, cover embedding, lyrics tagging, output folder controls, bilingual UI, and a desktop/web interface for the whole toolchain.
 
 In short: `streamrip` is the core. Tidal Max FLAC Studio is the UI and workflow layer around it.
 
 ## GitHub Pages
 
-GitHub Pages is the instruction page, not the product runtime. Users enter the product through the local app after cloning and running the repository:
+GitHub Pages is the instruction page, not the product runtime. Users enter the product through the local desktop app, or through the local web server during development:
 
 ```text
-GitHub Pages guide -> GitHub repository -> local app at http://127.0.0.1:8000
+GitHub Pages guide -> GitHub repository -> local desktop app
 ```
 
 GitHub Pages cannot run the downloader itself because the downloader needs local tools, local Tidal authorization, and access to your local output folder.
@@ -63,6 +63,14 @@ python3 -m venv .venv
 
 ## Run
 
+Desktop window:
+
+```bash
+.venv/bin/python -m app.desktop
+```
+
+Local browser server:
+
 ```bash
 ./scripts/run.sh
 ```
@@ -78,6 +86,22 @@ Manual run command:
 ```bash
 .venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
+
+## Package Desktop Apps
+
+Build a macOS `.app` on macOS:
+
+```bash
+./scripts/package_macos.sh
+```
+
+Build a Windows `.exe` on Windows PowerShell:
+
+```powershell
+.\scripts\package_windows.ps1
+```
+
+The packaged app opens the same UI in a native desktop window and starts the local backend automatically.
 
 ## Binding Tidal
 

@@ -157,16 +157,16 @@
       <div class="eyebrow">Local Tidal workstation</div>
       <h1>Tidal Max FLAC Studio</h1>
       <p class="lead">
-        A local web UI built around streamrip for personal offline listening:
+        A local desktop/web UI built around streamrip for personal offline listening:
         Tidal binding, Max/Hi-Res FLAC downloads, cover embedding, lyrics
         tagging, output folder controls, and a guided setup flow.
       </p>
       <div class="notice">
         <strong>You do not enter the product from GitHub Pages.</strong>
         <p>
-          This page is the instruction page. The product is a local app. Users
-          download the repository, run it on their Mac, then enter the product at
-          <code>http://127.0.0.1:8000</code>.
+          This page is the instruction page. The product is a local desktop app
+          or local browser app. Users download the repository, install it, then
+          start the app on their own computer.
         </p>
       </div>
       <section class="path">
@@ -179,8 +179,8 @@
           <p>Clone or download the source code.</p>
         </div>
         <div>
-          <strong>3. Local product page</strong>
-          <p>Run the app and open <code>127.0.0.1:8000</code>.</p>
+          <strong>3. Local product</strong>
+          <p>Run the desktop app or open <code>127.0.0.1:8000</code>.</p>
         </div>
       </section>
       <div class="actions">
@@ -196,11 +196,11 @@ cd tidal-max-flac-download
         </article>
         <article class="card">
           <h2>2. Start the local app</h2>
-          <pre><code>./scripts/run.sh</code></pre>
+          <pre><code>.venv/bin/python -m app.desktop</code></pre>
           <p>
-            The script starts the local server and opens
-            <code>http://127.0.0.1:8000</code>. That local address is the actual
-            product UI.
+            This opens the product in a desktop window and starts the local
+            backend automatically. Developers can also run
+            <code>./scripts/run.sh</code> to use the browser version.
           </p>
         </article>
         <article class="card">
@@ -223,11 +223,10 @@ cd tidal-max-flac-download
           </p>
         </article>
         <article class="card">
-          <h2>Integrated</h2>
+          <h2>Packaged</h2>
           <p>
-            The app adds guided Tidal binding, one-click missing tool setup,
-            Tidal URL queues, cover embedding, lyrics tagging, and Finder output
-            controls.
+            Build a macOS app with <code>./scripts/package_macos.sh</code> or a
+            Windows app with <code>.\scripts\package_windows.ps1</code>.
           </p>
         </article>
         <article class="card">
