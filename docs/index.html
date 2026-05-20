@@ -97,8 +97,44 @@
       }
 
       .credit {
-        margin-top: 8px;
+        margin-top: 10px;
         font-size: 14px;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 32px;
+      }
+
+      .step-card {
+        border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--panel) 92%, black);
+        padding: 18px;
+      }
+
+      .step-label {
+        color: var(--amber);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .step-card h2 {
+        margin: 10px 0 8px;
+        font-size: 20px;
+      }
+
+      .step-card p {
+        margin: 0;
+      }
+
+      @media (max-width: 780px) {
+        .steps {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -125,9 +161,37 @@
         <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
       </div>
       <p class="credit">
-        Powered by <a href="https://github.com/nathom/streamrip">streamrip</a>,
-        created by <code>nathom</code>.
+        Tidal Max FLAC Studio by <a href="https://github.com/HonstinII">HonstinII</a>.
+        Core downloading is powered by
+        <a href="https://github.com/nathom/streamrip">streamrip</a>, created by
+        <code>nathom</code>.
       </p>
+      <section class="steps" aria-label="How to use">
+        <article class="step-card">
+          <div class="step-label">Step 1</div>
+          <h2>Prepare the environment</h2>
+          <p>
+            Open the app and finish the tool check. Install missing core tools
+            from the setup screen if the app asks for them.
+          </p>
+        </article>
+        <article class="step-card">
+          <div class="step-label">Step 2</div>
+          <h2>Link Tidal</h2>
+          <p>
+            Click the Tidal authorization link, sign in on Tidal, then return to
+            the app after the token is detected.
+          </p>
+        </article>
+        <article class="step-card">
+          <div class="step-label">Step 3</div>
+          <h2>Paste URLs and download</h2>
+          <p>
+            Paste Tidal album or track URLs, choose the output folder, then
+            start the FLAC download with covers and lyrics enabled.
+          </p>
+        </article>
+      </section>
     </main>
   </body>
 </html>

@@ -19,4 +19,20 @@ def test_pages_omits_explainer_cards():
 
     assert "You do not enter the product from GitHub Pages" not in html
     assert "Download the desktop app" not in html
-    assert 'class="card"' not in html
+
+
+def test_pages_credits_project_author_and_streamrip():
+    html = (ROOT / "docs" / "index.html").read_text()
+
+    assert "Tidal Max FLAC Studio by" in html
+    assert "HonstinII" in html
+    assert "streamrip" in html
+    assert "nathom" in html
+
+
+def test_pages_has_three_usage_steps():
+    html = (ROOT / "docs" / "index.html").read_text()
+
+    assert "Prepare the environment" in html
+    assert "Link Tidal" in html
+    assert "Paste URLs and download" in html
