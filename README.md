@@ -14,7 +14,13 @@ In short: `streamrip` is the core. Tidal Max FLAC Studio is the UI and workflow 
 
 ## GitHub Pages
 
-GitHub Pages can only host the static project page in `docs/`. It cannot run the downloader itself because the downloader needs local tools, local Tidal authorization, and access to your local output folder.
+GitHub Pages is the instruction page, not the product runtime. Users enter the product through the local app after cloning and running the repository:
+
+```text
+GitHub Pages guide -> GitHub repository -> local app at http://127.0.0.1:8000
+```
+
+GitHub Pages cannot run the downloader itself because the downloader needs local tools, local Tidal authorization, and access to your local output folder.
 
 The included Pages workflow publishes `docs/index.html` when `main` is pushed:
 
@@ -58,13 +64,19 @@ python3 -m venv .venv
 ## Run
 
 ```bash
-.venv/bin/python -m uvicorn app.main:app --reload
+./scripts/run.sh
 ```
 
-Open:
+The script starts the local server and opens:
 
 ```text
 http://127.0.0.1:8000
+```
+
+Manual run command:
+
+```bash
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 ## Binding Tidal

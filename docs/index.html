@@ -128,8 +128,25 @@
         margin: 28px 0 0;
       }
 
+      .path {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .path div {
+        border: 1px solid var(--line);
+        background: #111714;
+        padding: 14px;
+      }
+
       @media (max-width: 780px) {
         .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .path {
           grid-template-columns: 1fr;
         }
       }
@@ -145,12 +162,27 @@
         tagging, output folder controls, and a guided setup flow.
       </p>
       <div class="notice">
-        <strong>This page is not the downloader.</strong>
+        <strong>You do not enter the product from GitHub Pages.</strong>
         <p>
-          GitHub Pages can only host this static guide. To use the app, run it
-          locally on your Mac, then open <code>http://127.0.0.1:8000</code>.
+          This page is the instruction page. The product is a local app. Users
+          download the repository, run it on their Mac, then enter the product at
+          <code>http://127.0.0.1:8000</code>.
         </p>
       </div>
+      <section class="path">
+        <div>
+          <strong>1. This page</strong>
+          <p>Read the guide and go to the GitHub repository.</p>
+        </div>
+        <div>
+          <strong>2. GitHub repository</strong>
+          <p>Clone or download the source code.</p>
+        </div>
+        <div>
+          <strong>3. Local product page</strong>
+          <p>Run the app and open <code>127.0.0.1:8000</code>.</p>
+        </div>
+      </section>
       <div class="actions">
         <a class="button primary" href="https://github.com/HonstinII/tidal-max-flac-download">Open GitHub repository</a>
         <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
@@ -164,8 +196,12 @@ cd tidal-max-flac-download
         </article>
         <article class="card">
           <h2>2. Start the local app</h2>
-          <pre><code>.venv/bin/python -m uvicorn app.main:app --reload</code></pre>
-          <p>Then open <code>http://127.0.0.1:8000</code> in your browser.</p>
+          <pre><code>./scripts/run.sh</code></pre>
+          <p>
+            The script starts the local server and opens
+            <code>http://127.0.0.1:8000</code>. That local address is the actual
+            product UI.
+          </p>
         </article>
         <article class="card">
           <h2>3. Bind Tidal and download</h2>
