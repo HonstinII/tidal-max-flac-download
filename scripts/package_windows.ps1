@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 
 if (!(Test-Path ".venv\Scripts\python.exe")) {
-  py -3 -m venv .venv
+  python -m venv .venv
 }
 
 .\.venv\Scripts\python.exe -m pip install --upgrade pip

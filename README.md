@@ -34,7 +34,7 @@ After pushing to GitHub, enable Pages from **Settings -> Pages -> GitHub Actions
 
 - macOS
 - Homebrew
-- Python 3.14 or newer
+- Python 3.12 or newer
 - `streamrip`
 - `ffmpeg`
 - `metaflac` from the `flac` package
