@@ -85,6 +85,13 @@
         font-weight: 700;
       }
 
+      a.secondary-download {
+        border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+        background: rgba(70, 213, 159, 0.08);
+        color: var(--text);
+        font-weight: 700;
+      }
+
       .grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -141,6 +148,22 @@
         padding: 14px;
       }
 
+      .download-panel {
+        border: 1px solid var(--line);
+        background: #111714;
+        margin: 28px 0 6px;
+        padding: 18px;
+      }
+
+      .download-panel h2 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+
+      .download-panel p {
+        margin: 0;
+      }
+
       @media (max-width: 780px) {
         .grid {
           grid-template-columns: 1fr;
@@ -183,8 +206,25 @@
           <p>Unzip it, open the app, bind Tidal, then download.</p>
         </div>
       </section>
+      <section class="download-panel" aria-labelledby="download-title">
+        <h2 id="download-title">Download the desktop app</h2>
+        <p>
+          Choose your platform, unzip the download, then open
+          <strong>Tidal Max FLAC Studio</strong>.
+        </p>
+        <div class="actions">
+          <a
+            class="button primary"
+            href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.1.1/Tidal-Max-FLAC-Studio-macOS.zip"
+          >Download for macOS</a>
+          <a
+            class="button secondary-download"
+            href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.1.1/Tidal-Max-FLAC-Studio-Windows.zip"
+          >Download for Windows</a>
+          <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download/releases">All releases</a>
+        </div>
+      </section>
       <div class="actions">
-        <a class="button primary" href="https://github.com/HonstinII/tidal-max-flac-download/releases">Download app</a>
         <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download">Open GitHub repository</a>
         <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
       </div>
