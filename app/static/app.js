@@ -44,6 +44,9 @@ const els = {
   singleFilenameTemplate: document.querySelector("#singleFilenameTemplate"),
   existingStrategy: document.querySelector("#existingStrategy"),
   previewButton: document.querySelector("#previewButton"),
+  settingsButton: document.querySelector("#settingsButton"),
+  settingsModal: document.querySelector("#settingsModal"),
+  closeSettingsButton: document.querySelector("#closeSettingsButton"),
   previewResults: document.querySelector("#previewResults"),
   downloadButton: document.querySelector("#downloadButton"),
   queueTable: document.querySelector("#queueTable"),
@@ -113,6 +116,9 @@ const copy = {
     lyricsSynced: "Synced",
     lyricsPlain: "Plain",
     writeLrc: "Write .lrc file",
+    downloadSettings: "Download settings",
+    metadataSettings: "Metadata and files",
+    done: "Done",
     albumTemplate: "Album folder template",
     filenameTemplate: "Album file template",
     singleFilenameTemplate: "Single file template",
@@ -205,6 +211,9 @@ const copy = {
     lyricsSynced: "同步歌词",
     lyricsPlain: "普通歌词",
     writeLrc: "写出 .lrc 文件",
+    downloadSettings: "下载设置",
+    metadataSettings: "元数据与文件",
+    done: "完成",
     albumTemplate: "专辑目录模板",
     filenameTemplate: "专辑文件名模板",
     singleFilenameTemplate: "单曲文件名模板",
@@ -261,6 +270,11 @@ function applyLanguage() {
   document.documentElement.lang = state.language === "zh" ? "zh-CN" : "en";
   document.querySelectorAll("[data-i18n]").forEach((node) => {
     node.textContent = t(node.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-title]").forEach((node) => {
+    const value = t(node.dataset.i18nTitle);
+    node.setAttribute("title", value);
+    node.setAttribute("aria-label", value);
   });
   els.langEn.classList.toggle("active", state.language === "en");
   els.langZh.classList.toggle("active", state.language === "zh");
@@ -732,6 +746,14 @@ function hideCoverToolModal() {
   els.coverToolModal.classList.add("hidden");
 }
 
+function showSettingsModal() {
+  els.settingsModal.classList.remove("hidden");
+}
+
+function hideSettingsModal() {
+  els.settingsModal.classList.add("hidden");
+}
+
 async function unbindTidal() {
   if (!confirm(t("unbindConfirm"))) return;
   closeAccountMenu();
@@ -756,6 +778,11 @@ function toggleAccountMenu() {
 els.bindButton.addEventListener("click", startBinding);
 els.previewButton.addEventListener("click", previewUrls);
 els.downloadButton.addEventListener("click", startDownload);
+els.settingsButton.addEventListener("click", showSettingsModal);
+els.closeSettingsButton.addEventListener("click", hideSettingsModal);
+els.settingsModal.addEventListener("click", (event) => {
+  if (event.target === els.settingsModal) hideSettingsModal();
+});
 els.pauseRun.addEventListener("click", pauseRun);
 els.resumeRun.addEventListener("click", resumeRun);
 els.cancelRun.addEventListener("click", cancelRun);

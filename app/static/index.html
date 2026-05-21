@@ -81,50 +81,20 @@
               <span data-i18n="segmentConcurrency">Segment concurrency</span>
               <input id="concurrency" type="number" min="1" max="24" value="10" />
             </label>
-            <label>
-              <span data-i18n="existingStrategy">Existing files</span>
-              <select id="existingStrategy">
-                <option value="skip" data-i18n="strategySkip">Skip</option>
-                <option value="overwrite" data-i18n="strategyOverwrite">Overwrite</option>
-                <option value="keep_both" data-i18n="strategyKeepBoth">Keep both</option>
-              </select>
-            </label>
-            <label class="toggle">
-              <input id="embedCovers" type="checkbox" checked />
-              <span data-i18n="embedCover">Embed cover art</span>
-            </label>
             <label class="toggle">
               <input id="embedLyrics" type="checkbox" checked />
               <span data-i18n="embedLyrics">Embed lyrics</span>
-            </label>
-            <label>
-              <span data-i18n="lyricsMode">Lyrics mode</span>
-              <select id="lyricsMode">
-                <option value="auto" data-i18n="lyricsAuto">Auto</option>
-                <option value="synced" data-i18n="lyricsSynced">Synced</option>
-                <option value="plain" data-i18n="lyricsPlain">Plain</option>
-              </select>
-            </label>
-            <label class="toggle">
-              <input id="writeLrc" type="checkbox" checked />
-              <span data-i18n="writeLrc">Write .lrc file</span>
-            </label>
-            <label class="wide-control">
-              <span data-i18n="albumTemplate">Album folder template</span>
-              <input id="albumTemplate" type="text" value="{album_artist}/{album} ({year})" />
-            </label>
-            <label class="wide-control">
-              <span data-i18n="filenameTemplate">Album file template</span>
-              <input id="filenameTemplate" type="text" value="{track_number}. {artist} - {title}" />
-            </label>
-            <label class="wide-control">
-              <span data-i18n="singleFilenameTemplate">Single file template</span>
-              <input id="singleFilenameTemplate" type="text" value="{artist} - {title}" />
             </label>
           </div>
           <div class="button-row">
             <button id="previewButton" class="secondary-button" data-i18n="previewUrls">Preview URLs</button>
             <button id="downloadButton" class="primary-button" data-i18n="startDownload">Start download</button>
+            <button id="settingsButton" type="button" class="icon-button" data-i18n-title="downloadSettings" aria-label="Download settings">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+                <path d="M19.4 15a8 8 0 0 0 .1-1l2-1.5-2-3.5-2.4 1a8.4 8.4 0 0 0-1.7-1L15 6.5h-4L10.6 9a8.4 8.4 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a8 8 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a8.4 8.4 0 0 0 1.7 1l.4 2.5h4l.4-2.5a8.4 8.4 0 0 0 1.7-1l2.4 1 2-3.5-2.1-1.5Z" />
+              </svg>
+            </button>
           </div>
           <div id="previewResults" class="preview-results hidden"></div>
         </section>
@@ -163,6 +133,53 @@
         <div class="modal-actions">
           <button id="installCoverToolButton" type="button" class="primary-button" data-i18n="installCoverTool">Install cover tool</button>
           <button id="cancelCoverToolButton" type="button" class="secondary-button" data-i18n="cancelCoverTool">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <div id="settingsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal settings-modal">
+        <p class="section-kicker" data-i18n="downloadSettings">Download settings</p>
+        <h2 id="settingsTitle" data-i18n="metadataSettings">Metadata and files</h2>
+        <div class="settings-grid">
+          <label>
+            <span data-i18n="existingStrategy">Existing files</span>
+            <select id="existingStrategy">
+              <option value="skip" data-i18n="strategySkip">Skip</option>
+              <option value="overwrite" data-i18n="strategyOverwrite">Overwrite</option>
+              <option value="keep_both" data-i18n="strategyKeepBoth">Keep both</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="lyricsMode">Lyrics mode</span>
+            <select id="lyricsMode">
+              <option value="auto" data-i18n="lyricsAuto">Auto</option>
+              <option value="synced" data-i18n="lyricsSynced">Synced</option>
+              <option value="plain" data-i18n="lyricsPlain">Plain</option>
+            </select>
+          </label>
+          <label class="toggle">
+            <input id="embedCovers" type="checkbox" checked />
+            <span data-i18n="embedCover">Embed cover art</span>
+          </label>
+          <label class="toggle">
+            <input id="writeLrc" type="checkbox" checked />
+            <span data-i18n="writeLrc">Write .lrc file</span>
+          </label>
+          <label class="wide-control">
+            <span data-i18n="albumTemplate">Album folder template</span>
+            <input id="albumTemplate" type="text" value="{album_artist}/{album} ({year})" />
+          </label>
+          <label class="wide-control">
+            <span data-i18n="filenameTemplate">Album file template</span>
+            <input id="filenameTemplate" type="text" value="{track_number}. {artist} - {title}" />
+          </label>
+          <label class="wide-control">
+            <span data-i18n="singleFilenameTemplate">Single file template</span>
+            <input id="singleFilenameTemplate" type="text" value="{artist} - {title}" />
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button id="closeSettingsButton" type="button" class="primary-button" data-i18n="done">Done</button>
         </div>
       </div>
     </div>

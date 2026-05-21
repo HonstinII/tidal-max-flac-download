@@ -137,6 +137,11 @@ h2 {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.button-row .icon-button {
+  margin-left: auto;
 }
 
 .install-log {
@@ -263,6 +268,28 @@ h2 {
   cursor: pointer;
 }
 
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  background: #111714;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-button svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .secondary-link {
   display: inline-flex;
   align-items: center;
@@ -338,6 +365,17 @@ h2 {
   background: #111714;
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.46);
   padding: 22px;
+}
+
+.settings-modal {
+  width: min(560px, 100%);
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 18px;
 }
 
 .modal-source {
