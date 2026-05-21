@@ -56,7 +56,7 @@ def test_resolve_album_expands_track_items():
             },
             {
                 "items": [
-                    {"item": {"id": 1, "title": "One", "artist": {"name": "Artist"}}},
+                    {"item": {"id": 1, "title": "One", "artist": {"name": "Artist"}, "duration": 209}},
                     {"item": {"id": 2, "title": "Two", "artist": {"name": "Artist"}}},
                 ]
             },
@@ -77,3 +77,4 @@ def test_resolve_album_expands_track_items():
     assert [track.track_id for track in tracks] == ["1", "2"]
     assert [track.track_number for track in tracks] == [1, 2]
     assert tracks[0].album_title == "Album"
+    assert tracks[0].duration_seconds == 209

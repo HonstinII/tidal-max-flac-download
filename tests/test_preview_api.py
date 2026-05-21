@@ -19,6 +19,7 @@ def track_item(track_id="1", title="Song", track_number=1):
         album_year="2024",
         cover_id="cover-id",
         track_number=track_number,
+        duration_seconds=209,
     )
 
 
@@ -43,6 +44,7 @@ def test_preview_track_url_returns_track(monkeypatch):
     assert data["items"][0]["kind"] == "track"
     assert data["items"][0]["track_count"] == 1
     assert data["items"][0]["tracks"][0]["title"] == "Song"
+    assert data["items"][0]["tracks"][0]["duration_seconds"] == 209
 
 
 def test_preview_album_url_returns_album_tracks(monkeypatch):

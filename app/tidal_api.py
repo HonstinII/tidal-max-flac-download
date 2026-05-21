@@ -26,6 +26,7 @@ class TrackItem:
     album_year: str
     cover_id: str | None
     track_number: int | None = None
+    duration_seconds: int | None = None
 
 
 def parse_tidal_url(url: str) -> TidalReference:
@@ -107,4 +108,5 @@ class TidalApi:
             ),
             cover_id=track_album.get("cover"),
             track_number=track_number,
+            duration_seconds=track.get("duration"),
         )

@@ -109,6 +109,7 @@ const copy = {
     choose: "Choose",
     openFolder: "Open folder",
     segmentConcurrency: "Segment concurrency",
+    concurrencyHelp: "Controls how many audio segments download at the same time. Higher values can speed up fast networks, but may increase CPU, memory, disk activity, and the chance of network throttling or unstable downloads.",
     embedCover: "Embed cover art",
     embedLyrics: "Embed lyrics",
     lyricsMode: "Lyrics mode",
@@ -204,6 +205,7 @@ const copy = {
     choose: "选择",
     openFolder: "打开文件夹",
     segmentConcurrency: "分段并发",
+    concurrencyHelp: "控制同时下载多少个音频分段。数值越大，在网络足够快时可能更快，但也会增加 CPU、内存、磁盘占用，并提高被网络限速或下载不稳定的概率。",
     embedCover: "嵌入封面",
     embedLyrics: "嵌入歌词",
     lyricsMode: "歌词模式",
@@ -508,17 +510,42 @@ function renderPreview(data) {
     return;
   }
   const items = (data.items || []).map((item) => {
-    const tracks = item.tracks.slice(0, 4).map((track) => `<li>${track.track_number || ""} ${track.artist || ""} - ${track.title || ""}</li>`).join("");
+    const first = item.tracks[0] || {};
+    const cover = previewCoverUrl(first.cover_id);
+    const tracks = item.tracks
+      .map((track) => `
+        <li>
+          <span>${track.track_number || ""} ${track.artist || ""} - ${track.title || ""}</span>
+          <time>${formatDuration(track.duration_seconds)}</time>
+        </li>
+      `)
+      .join("");
     return `
       <div class="preview-card">
-        <strong>${item.kind === "album" ? item.album_title : item.tracks[0]?.title || item.item_id}</strong>
-        <span>${item.album_artist || item.tracks[0]?.artist || ""} · ${item.track_count} ${t("tracks")}</span>
-        <ul>${tracks}</ul>
+        ${cover ? `<img class="preview-cover" src="${cover}" alt="">` : `<div class="preview-cover preview-cover-empty"></div>`}
+        <div class="preview-body">
+          <strong>${item.kind === "album" ? item.album_title : first.title || item.item_id}</strong>
+          <span>${item.album_artist || first.artist || ""} · ${item.track_count} ${t("tracks")}</span>
+          <ul>${tracks}</ul>
+        </div>
       </div>
     `;
   });
   const errors = (data.errors || []).map((error) => `<div class="preview-error">${error.url}<br>${error.message}</div>`);
   els.previewResults.innerHTML = [...items, ...errors].join("");
+}
+
+function previewCoverUrl(coverId) {
+  if (!coverId) return "";
+  return `https://resources.tidal.com/images/${String(coverId).replaceAll("-", "/")}/320x320.jpg`;
+}
+
+function formatDuration(seconds) {
+  const value = Number(seconds || 0);
+  if (!value) return "";
+  const minutes = Math.floor(value / 60);
+  const rest = String(value % 60).padStart(2, "0");
+  return `${minutes}:${rest}`;
 }
 
 function queuePayload(urls) {

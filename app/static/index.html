@@ -77,9 +77,9 @@
                 <button id="pickFolder" type="button" class="secondary-button" data-i18n="choose">Choose</button>
               </span>
             </label>
-            <label>
-              <span data-i18n="segmentConcurrency">Segment concurrency</span>
-              <input id="concurrency" type="number" min="1" max="24" value="10" />
+            <label class="toggle">
+              <input id="embedCovers" type="checkbox" checked />
+              <span data-i18n="embedCover">Embed cover art</span>
             </label>
             <label class="toggle">
               <input id="embedLyrics" type="checkbox" checked />
@@ -90,10 +90,7 @@
             <button id="previewButton" class="secondary-button" data-i18n="previewUrls">Preview URLs</button>
             <button id="downloadButton" class="primary-button" data-i18n="startDownload">Start download</button>
             <button id="settingsButton" type="button" class="icon-button" data-i18n-title="downloadSettings" aria-label="Download settings">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-                <path d="M19.4 15a8 8 0 0 0 .1-1l2-1.5-2-3.5-2.4 1a8.4 8.4 0 0 0-1.7-1L15 6.5h-4L10.6 9a8.4 8.4 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a8 8 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a8.4 8.4 0 0 0 1.7 1l.4 2.5h4l.4-2.5a8.4 8.4 0 0 0 1.7-1l2.4 1 2-3.5-2.1-1.5Z" />
-              </svg>
+              <img src="/static/settings.png" alt="" />
             </button>
           </div>
           <div id="previewResults" class="preview-results hidden"></div>
@@ -142,12 +139,11 @@
         <h2 id="settingsTitle" data-i18n="metadataSettings">Metadata and files</h2>
         <div class="settings-grid">
           <label>
-            <span data-i18n="existingStrategy">Existing files</span>
-            <select id="existingStrategy">
-              <option value="skip" data-i18n="strategySkip">Skip</option>
-              <option value="overwrite" data-i18n="strategyOverwrite">Overwrite</option>
-              <option value="keep_both" data-i18n="strategyKeepBoth">Keep both</option>
-            </select>
+            <span class="label-row">
+              <span data-i18n="segmentConcurrency">Segment concurrency</span>
+              <span class="info-dot" data-i18n-title="concurrencyHelp" tabindex="0">!</span>
+            </span>
+            <input id="concurrency" type="number" min="1" max="24" value="10" />
           </label>
           <label>
             <span data-i18n="lyricsMode">Lyrics mode</span>
@@ -158,12 +154,16 @@
             </select>
           </label>
           <label class="toggle">
-            <input id="embedCovers" type="checkbox" checked />
-            <span data-i18n="embedCover">Embed cover art</span>
-          </label>
-          <label class="toggle">
             <input id="writeLrc" type="checkbox" checked />
             <span data-i18n="writeLrc">Write .lrc file</span>
+          </label>
+          <label>
+            <span data-i18n="existingStrategy">Existing files</span>
+            <select id="existingStrategy">
+              <option value="skip" data-i18n="strategySkip">Skip</option>
+              <option value="overwrite" data-i18n="strategyOverwrite">Overwrite</option>
+              <option value="keep_both" data-i18n="strategyKeepBoth">Keep both</option>
+            </select>
           </label>
           <label class="wide-control">
             <span data-i18n="albumTemplate">Album folder template</span>

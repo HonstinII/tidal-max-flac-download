@@ -341,6 +341,7 @@ def track_to_dict(track: TrackItem) -> dict:
         "album_year": track.album_year,
         "track_number": track.track_number,
         "cover_id": track.cover_id,
+        "duration_seconds": track.duration_seconds,
     }
 
 
@@ -354,6 +355,7 @@ def track_from_item(item: dict) -> TrackItem:
         album_year=str(item.get("album_year") or ""),
         cover_id=item.get("cover_id"),
         track_number=item.get("track_number"),
+        duration_seconds=item.get("duration_seconds"),
     )
 
 

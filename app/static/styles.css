@@ -272,22 +272,19 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  min-height: 44px;
-  border: 1px solid var(--line);
-  background: #111714;
+  width: 42px;
+  min-height: 42px;
+  border: 0;
+  background: transparent;
   color: var(--text);
   cursor: pointer;
+  padding: 0;
 }
 
-.icon-button svg {
-  width: 19px;
-  height: 19px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.icon-button img {
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 
 .secondary-link {
@@ -488,6 +485,26 @@ select {
   grid-column: 1 / -1;
 }
 
+.label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.info-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: help;
+}
+
 .toggle {
   grid-template-columns: 18px 1fr;
   align-items: center;
@@ -514,14 +531,56 @@ select {
   padding: 12px;
 }
 
+.preview-card {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.preview-cover {
+  width: 112px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  background: #0e1210;
+}
+
+.preview-cover-empty {
+  background: linear-gradient(135deg, rgba(70, 213, 159, 0.16), rgba(225, 166, 75, 0.14));
+}
+
+.preview-body {
+  min-width: 0;
+}
+
 .preview-card strong {
   display: block;
   color: var(--text);
+  font-size: 20px;
+  line-height: 1.15;
+  margin-bottom: 6px;
 }
 
 .preview-card ul {
-  margin: 8px 0 0;
-  padding-left: 18px;
+  display: grid;
+  gap: 7px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preview-card li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  border-top: 1px solid rgba(214, 224, 217, 0.1);
+  padding-top: 7px;
+}
+
+.preview-card time {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .preview-error {

@@ -90,6 +90,7 @@ def preview_track(track: TrackItem) -> dict:
         "album_year": track.album_year,
         "track_number": track.track_number,
         "cover_id": track.cover_id,
+        "duration_seconds": track.duration_seconds,
     }
 
 
