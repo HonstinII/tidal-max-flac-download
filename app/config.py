@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+import os
+import platform
 from pathlib import Path
 
 from .environment import detect_environment
@@ -15,7 +17,10 @@ class AppConfig:
     skip_existing: bool = True
 
 
-def streamrip_config_path() -> Path:
+def streamrip_config_path(platform_name: str | None = None) -> Path:
+    platform_name = platform_name or platform.system()
+    if platform_name == "Windows":
+        return Path(os.environ.get("APPDATA", Path.home() / "AppData/Roaming")) / "streamrip/config.toml"
     return Path.home() / "Library/Application Support/streamrip/config.toml"
 
 

@@ -15,6 +15,12 @@ def test_streamrip_config_path_uses_macos_application_support():
     )
 
 
+def test_streamrip_config_path_uses_windows_appdata(monkeypatch, tmp_path):
+    monkeypatch.setenv("APPDATA", str(tmp_path / "Roaming"))
+
+    assert streamrip_config_path("Windows") == tmp_path / "Roaming/streamrip/config.toml"
+
+
 def test_tool_status_reports_boolean_values(monkeypatch):
     def fake_detect_environment(platform_name=None):
         class Environment:

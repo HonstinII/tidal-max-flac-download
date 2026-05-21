@@ -32,6 +32,19 @@ def test_windows_detection_finds_managed_metaflac(monkeypatch, tmp_path):
     assert find_tool("metaflac", "Windows") == str(metaflac)
 
 
+def test_windows_detection_finds_versioned_python_user_scripts(monkeypatch, tmp_path):
+    appdata = tmp_path / "Roaming"
+    scripts = appdata / "Python" / "Python311" / "Scripts"
+    scripts.mkdir(parents=True)
+    rip = scripts / "rip.exe"
+    rip.write_text("")
+    rip.chmod(0o755)
+    monkeypatch.setenv("APPDATA", str(appdata))
+    monkeypatch.setenv("PATH", "")
+
+    assert find_tool("streamrip", "Windows") == str(rip)
+
+
 def test_runtime_search_path_includes_managed_and_homebrew(monkeypatch, tmp_path):
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
     monkeypatch.setenv("PATH", "/usr/bin:/bin")

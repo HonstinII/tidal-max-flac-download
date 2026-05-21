@@ -76,10 +76,13 @@ def candidate_tool_paths(platform_name: str | None = None) -> list[str]:
         str(Path.home() / ".local/bin"),
     ]
     if platform_name == "Windows":
+        python_root = Path(os.environ.get("APPDATA", Path.home() / "AppData/Roaming")) / "Python"
+        python_script_dirs = [str(path / "Scripts") for path in python_root.glob("Python*/") if path.is_dir()]
         extras.extend(
             [
                 str(managed / "flac" / "bin"),
-                str(Path(os.environ.get("APPDATA", Path.home() / "AppData/Roaming")) / "Python/Scripts"),
+                str(python_root / "Scripts"),
+                *python_script_dirs,
             ]
         )
     if platform_name == "Darwin":
