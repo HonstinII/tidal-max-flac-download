@@ -101,6 +101,18 @@ class AppDatabase:
             ).fetchone()
         return self._run_from_row(row) if row else None
 
+    def list_runs(self, limit: int = 25) -> list[dict]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT * FROM download_runs
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+        return [self._run_from_row(row) for row in rows]
+
     def update_run(self, run_id: str, **fields) -> dict | None:
         if not fields:
             return self.get_run(run_id)
@@ -219,6 +231,47 @@ class AppDatabase:
         with self.connect() as connection:
             rows = connection.execute(query, values).fetchall()
         return [dict(row) for row in rows]
+
+    def list_queue_items_by_status(self, run_id: str, statuses: set[str]) -> list[dict]:
+        if not statuses:
+            return []
+        placeholders = ", ".join("?" for _ in statuses)
+        values = [run_id, *sorted(statuses)]
+        with self.connect() as connection:
+            rows = connection.execute(
+                f"""
+                SELECT * FROM queue_items
+                WHERE run_id = ? AND status IN ({placeholders})
+                ORDER BY created_at, rowid
+                """,
+                values,
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def retry_queue_item(self, item_id: str) -> dict | None:
+        item = self.get_queue_item(item_id)
+        if item is None:
+            return None
+        return self.update_queue_item(
+            item_id,
+            status="ready",
+            attempts=int(item.get("attempts") or 0) + 1,
+            error=None,
+            progress_current=0,
+            progress_total=0,
+        )
+
+    def cancel_queued_items(self, run_id: str) -> None:
+        now = time.time()
+        with self.connect() as connection:
+            connection.execute(
+                """
+                UPDATE queue_items
+                SET status = 'cancelled', updated_at = ?
+                WHERE run_id = ? AND status IN ('queued', 'ready', 'failed')
+                """,
+                (now, run_id),
+            )
 
     def _run_from_row(self, row: sqlite3.Row) -> dict:
         data = dict(row)
