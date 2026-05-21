@@ -8,6 +8,8 @@ const state = {
   toastTimer: null,
   authStatus: "",
   activeRunId: null,
+  previewTimer: null,
+  previewAbort: null,
 };
 
 const els = {
@@ -43,7 +45,6 @@ const els = {
   filenameTemplate: document.querySelector("#filenameTemplate"),
   singleFilenameTemplate: document.querySelector("#singleFilenameTemplate"),
   existingStrategy: document.querySelector("#existingStrategy"),
-  previewButton: document.querySelector("#previewButton"),
   settingsButton: document.querySelector("#settingsButton"),
   settingsModal: document.querySelector("#settingsModal"),
   closeSettingsButton: document.querySelector("#closeSettingsButton"),
@@ -129,7 +130,8 @@ const copy = {
     strategySkip: "Skip",
     strategyOverwrite: "Overwrite",
     strategyKeepBoth: "Keep both",
-    previewUrls: "Parse preview",
+    previewParsing: "Parsing preview...",
+    previewFailed: "Parse failed. Please paste a complete Tidal link.",
     startDownload: "Start download",
     queue: "Queue",
     sessionEvents: "Session events",
@@ -227,7 +229,8 @@ const copy = {
     strategySkip: "跳过",
     strategyOverwrite: "覆盖",
     strategyKeepBoth: "保留两个",
-    previewUrls: "解析预览",
+    previewParsing: "解析中...",
+    previewFailed: "解析失败，请放入完整的tidal的链接",
     startDownload: "开始下载",
     queue: "队列",
     sessionEvents: "会话事件",
@@ -483,21 +486,55 @@ function readUrls() {
     .filter(Boolean);
 }
 
-async function previewUrls() {
-  const urls = readUrls();
-  if (!urls.length) {
-    showToast(t("pasteAtLeastOne"), "error", 3000);
+function hasCompleteTidalUrl(value) {
+  return /tidal\.com\/(album|track)\/\d+(?:\/[A-Za-z0-9_-]+)?(?:[?#]\S*)?$/i.test(value.trim());
+}
+
+function hasAnyUrl(value) {
+  return /https?:\/\/\S+/i.test(value);
+}
+
+function scheduleAutoPreview() {
+  if (state.previewTimer) clearTimeout(state.previewTimer);
+  const raw = els.urlInput.value.trim();
+  if (!raw) {
+    els.previewResults.classList.add("hidden");
+    els.previewResults.innerHTML = "";
     return;
   }
-  els.previewButton.disabled = true;
+  state.previewTimer = setTimeout(autoPreviewUrls, 450);
+}
+
+async function autoPreviewUrls() {
+  const urls = readUrls();
+  const invalid = urls.some((url) => hasAnyUrl(url) && !hasCompleteTidalUrl(url));
+  const complete = urls.filter(hasCompleteTidalUrl);
+  if (invalid || (urls.length && !complete.length && hasAnyUrl(els.urlInput.value))) {
+    renderPreviewError(t("previewFailed"));
+    return;
+  }
+  if (!complete.length) return;
+  if (state.previewAbort) state.previewAbort.abort();
+  state.previewAbort = new AbortController();
+  renderPreviewLoading();
   const response = await fetch("/api/preview", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ urls }),
+    body: JSON.stringify({ urls: complete }),
+    signal: state.previewAbort.signal,
   });
   const data = await response.json();
   renderPreview(data);
-  els.previewButton.disabled = false;
+}
+
+function renderPreviewLoading() {
+  els.previewResults.classList.remove("hidden");
+  els.previewResults.innerHTML = `<div class="preview-state">${t("previewParsing")}</div>`;
+}
+
+function renderPreviewError(message) {
+  els.previewResults.classList.remove("hidden");
+  els.previewResults.innerHTML = `<div class="preview-error">${message}</div>`;
 }
 
 function renderPreview(data) {
@@ -805,7 +842,8 @@ function toggleAccountMenu() {
 }
 
 els.bindButton.addEventListener("click", startBinding);
-els.previewButton.addEventListener("click", previewUrls);
+els.urlInput.addEventListener("input", scheduleAutoPreview);
+els.urlInput.addEventListener("paste", () => setTimeout(scheduleAutoPreview, 0));
 els.downloadButton.addEventListener("click", startDownload);
 els.settingsButton.addEventListener("click", showSettingsModal);
 els.closeSettingsButton.addEventListener("click", hideSettingsModal);

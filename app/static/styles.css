@@ -531,7 +531,8 @@ select {
 }
 
 .preview-card,
-.preview-error {
+.preview-error,
+.preview-state {
   border: 1px solid var(--line);
   background: var(--panel-2);
   color: var(--muted);
