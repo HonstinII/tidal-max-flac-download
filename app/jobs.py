@@ -342,6 +342,9 @@ def track_to_dict(track: TrackItem) -> dict:
         "track_number": track.track_number,
         "cover_id": track.cover_id,
         "duration_seconds": track.duration_seconds,
+        "total_tracks": track.total_tracks,
+        "disc_number": track.disc_number,
+        "total_discs": track.total_discs,
     }
 
 
@@ -356,6 +359,9 @@ def track_from_item(item: dict) -> TrackItem:
         cover_id=item.get("cover_id"),
         track_number=item.get("track_number"),
         duration_seconds=item.get("duration_seconds"),
+        total_tracks=item.get("total_tracks"),
+        disc_number=item.get("disc_number"),
+        total_discs=item.get("total_discs"),
     )
 
 

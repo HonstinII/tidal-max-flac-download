@@ -76,5 +76,8 @@ def test_resolve_album_expands_track_items():
 
     assert [track.track_id for track in tracks] == ["1", "2"]
     assert [track.track_number for track in tracks] == [1, 2]
+    assert [track.total_tracks for track in tracks] == [2, 2]
+    assert [track.disc_number for track in tracks] == [1, 1]
+    assert [track.total_discs for track in tracks] == [1, 1]
     assert tracks[0].album_title == "Album"
     assert tracks[0].duration_seconds == 209

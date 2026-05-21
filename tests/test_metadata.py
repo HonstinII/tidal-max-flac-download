@@ -11,6 +11,9 @@ def track():
         album_year="2026",
         cover_id="cover",
         track_number=7,
+        total_tracks=12,
+        disc_number=1,
+        total_discs=1,
     )
 
 
@@ -31,8 +34,14 @@ def test_repair_flac_tags_rewrites_core_metadata(monkeypatch, tmp_path):
     assert audio["artist"] == ["Artist"]
     assert audio["album"] == ["Album"]
     assert audio["albumartist"] == ["Album Artist"]
+    assert audio["album artist"] == ["Album Artist"]
     assert audio["date"] == ["2026"]
     assert audio["tracknumber"] == ["7"]
+    assert audio["tracktotal"] == ["12"]
+    assert audio["totaltracks"] == ["12"]
+    assert audio["discnumber"] == ["1"]
+    assert audio["disctotal"] == ["1"]
+    assert audio["totaldiscs"] == ["1"]
     assert audio["saved"] == ["yes"]
 
 

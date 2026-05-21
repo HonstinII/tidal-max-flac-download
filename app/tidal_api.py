@@ -27,6 +27,9 @@ class TrackItem:
     cover_id: str | None
     track_number: int | None = None
     duration_seconds: int | None = None
+    total_tracks: int | None = None
+    disc_number: int | None = None
+    total_discs: int | None = None
 
 
 def parse_tidal_url(url: str) -> TidalReference:
@@ -52,8 +55,14 @@ class TidalApi:
         if ref.kind == "album":
             album = self.get(f"albums/{ref.item_id}")
             items = self.get(f"albums/{ref.item_id}/items").get("items", [])
+            total_tracks = len(items)
+            disc_numbers = [
+                item["item"].get("volumeNumber") or item["item"].get("discNumber") or 1
+                for item in items
+            ]
+            total_discs = max(disc_numbers or [1])
             return [
-                self._track_item(item["item"], album, index)
+                self._track_item(item["item"], album, index, total_tracks, total_discs)
                 for index, item in enumerate(items, 1)
             ]
         raise ValueError(f"Unsupported Tidal reference: {ref.kind}")
@@ -89,7 +98,12 @@ class TidalApi:
         return response.json()
 
     def _track_item(
-        self, track: dict, album: dict | None, track_number: int | None
+        self,
+        track: dict,
+        album: dict | None,
+        track_number: int | None,
+        total_tracks: int | None = None,
+        total_discs: int | None = None,
     ) -> TrackItem:
         track_album = album or track.get("album") or {}
         album_artist = track_album.get("artist", {}).get("name") or track.get(
@@ -109,4 +123,7 @@ class TidalApi:
             cover_id=track_album.get("cover"),
             track_number=track_number,
             duration_seconds=track.get("duration"),
+            total_tracks=total_tracks,
+            disc_number=track.get("volumeNumber") or track.get("discNumber") or (1 if album else None),
+            total_discs=total_discs or (1 if album else None),
         )
