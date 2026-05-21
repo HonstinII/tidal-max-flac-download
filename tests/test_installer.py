@@ -1,4 +1,11 @@
-from app.installer import InstallJobManager, build_install_commands, build_install_plan
+import zipfile
+
+from app.installer import (
+    InstallJobManager,
+    build_install_commands,
+    build_install_plan,
+    extract_bundled_flac,
+)
 
 
 def environment(system, tools, homebrew=False, winget=False):
@@ -55,6 +62,8 @@ def test_install_job_manager_records_successful_command():
     assert calls == [["brew", "install", "ffmpeg"]]
     assert job.status == "complete"
     assert job.events[-1]["stage"] == "complete"
+    assert any(event["stage"] == "step_started" for event in job.events)
+    assert any(event["stage"] == "step_complete" for event in job.events)
 
 
 def test_macos_install_plan_uses_homebrew_for_audio_tools():
@@ -122,3 +131,34 @@ def test_windows_missing_metaflac_offers_bundled_flac_option():
 
     assert plan.bundled_options[0].tool == "metaflac"
     assert plan.bundled_options[0].kind == "bundled_flac"
+
+
+def test_extract_bundled_flac_extracts_zip(tmp_path):
+    zip_path = tmp_path / "flac.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("metaflac.exe", "fake")
+    target = tmp_path / "tools"
+
+    result = extract_bundled_flac(zip_path=zip_path, target_dir=target)
+
+    assert result["ok"] is True
+    assert (target / "metaflac.exe").read_text() == "fake"
+
+
+def test_extract_bundled_flac_missing_zip_returns_guide(tmp_path):
+    result = extract_bundled_flac(zip_path=tmp_path / "missing.zip", target_dir=tmp_path / "tools")
+
+    assert result["ok"] is False
+    assert "not included" in result["message"]
+
+
+def test_install_job_manager_records_failed_step_command():
+    def runner(command, on_line):
+        return 2
+
+    manager = InstallJobManager(runner=runner, platform_name="Darwin")
+    job = manager.create_job({"streamrip": True, "ffmpeg": False, "metaflac": True})
+    manager.run_job(job.job_id)
+
+    failed = [event for event in job.events if event["stage"] == "step_failed"][0]
+    assert failed["copy_command"] == "brew install ffmpeg"

@@ -7,10 +7,13 @@ import queue
 import subprocess
 import threading
 import uuid
+import zipfile
+from pathlib import Path
 from typing import Callable
 
 from .environment import EnvironmentInfo
 from .environment import detect_environment
+from .environment import managed_tools_dir
 
 
 InstallRunner = Callable[[list[str], Callable[[str], None]], int]
@@ -41,6 +44,7 @@ class InstallPlan:
 class InstallJob:
     job_id: str
     commands: list[list[str]]
+    steps: list[InstallStep] = field(default_factory=list)
     status: str = "queued"
     events: list[dict] = field(default_factory=list)
     queue: queue.Queue[dict | None] = field(default_factory=queue.Queue)
@@ -198,6 +202,27 @@ def subprocess_runner(command: list[str], on_line: Callable[[str], None]) -> int
     return process.wait()
 
 
+BUNDLED_FLAC_ZIP = Path(__file__).resolve().parent / "tools/windows/flac.zip"
+
+
+def extract_bundled_flac(
+    zip_path: Path | None = None,
+    target_dir: Path | None = None,
+) -> dict:
+    zip_path = zip_path or BUNDLED_FLAC_ZIP
+    target_dir = target_dir or managed_tools_dir("Windows") / "flac"
+    if not zip_path.exists():
+        return {
+            "ok": False,
+            "message": "Bundled FLAC tools are not included in this build.",
+            "target": str(target_dir),
+        }
+    target_dir.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(zip_path) as archive:
+        archive.extractall(target_dir)
+    return {"ok": True, "message": "Bundled FLAC tools extracted.", "target": str(target_dir)}
+
+
 class InstallJobManager:
     def __init__(
         self,
@@ -209,8 +234,23 @@ class InstallJobManager:
         self.jobs: dict[str, InstallJob] = {}
 
     def create_job(self, tools: dict[str, bool]) -> InstallJob:
-        commands = build_install_commands(tools, self.platform_name)
-        job = InstallJob(job_id=str(uuid.uuid4()), commands=commands)
+        if {"platform", "tools"}.issubset(tools.keys()):
+            plan = build_install_plan(tools)
+            commands = plan.commands
+            steps = plan.steps
+        else:
+            commands = build_install_commands(tools, self.platform_name)
+            steps = [
+                InstallStep(
+                    tool=command[-1] if command[:2] != ["brew", "install"] else "tools",
+                    label=" ".join(command),
+                    command=command,
+                    required=True,
+                    manual_command=" ".join(command),
+                )
+                for command in commands
+            ]
+        job = InstallJob(job_id=str(uuid.uuid4()), commands=commands, steps=steps)
         self.jobs[job.job_id] = job
         return job
 
@@ -231,17 +271,49 @@ class InstallJobManager:
 
         job.status = "running"
         job.add_event({"stage": "started", "message": "Installing missing tools."})
-        for command in job.commands:
-            job.add_event({"stage": "command", "message": " ".join(command)})
+        for index, command in enumerate(job.commands):
+            step = job.steps[index] if index < len(job.steps) else None
+            label = step.label if step else " ".join(command)
+            command_text = " ".join(command)
+            job.add_event(
+                {
+                    "stage": "step_started",
+                    "tool": step.tool if step else None,
+                    "label": label,
+                    "command": command_text,
+                    "copy_command": command_text,
+                    "message": label,
+                }
+            )
             return_code = self.runner(
                 command,
                 lambda line: job.add_event({"stage": "log", "message": line}),
             )
             if return_code != 0:
                 job.status = "failed"
+                job.add_event(
+                    {
+                        "stage": "step_failed",
+                        "tool": step.tool if step else None,
+                        "label": label,
+                        "command": command_text,
+                        "copy_command": command_text,
+                        "message": f"{label} exited with {return_code}.",
+                    }
+                )
                 job.add_event({"stage": "failed", "message": f"Installer exited with {return_code}."})
                 job.queue.put(None)
                 return
+            job.add_event(
+                {
+                    "stage": "step_complete",
+                    "tool": step.tool if step else None,
+                    "label": label,
+                    "command": command_text,
+                    "copy_command": command_text,
+                    "message": f"{label} complete.",
+                }
+            )
 
         job.status = "complete"
         job.add_event({"stage": "complete", "message": "Missing tools installed."})

@@ -12,7 +12,7 @@ from .tidal_auth import TidalAuthManager
 from .tidal_config import clear_tidal_auth, write_tidal_auth
 from .jobs import DownloadJobManager, JobOptions
 from .folders import open_folder, pick_folder
-from .installer import InstallJobManager
+from .installer import InstallJobManager, extract_bundled_flac
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
@@ -54,9 +54,22 @@ def get_setup_status():
 
 @app.post("/api/tools/install")
 def install_missing_tools():
-    job = install_manager.create_job(setup_status()["tools"])
+    status = setup_status()
+    job = install_manager.create_job(
+        {
+            "platform": status["platform"],
+            "tools": status["tools_detail"],
+            "package_managers": status["package_managers"],
+            "manual_commands": status["manual_commands"],
+        }
+    )
     install_manager.start_job(job.job_id)
     return {"job_id": job.job_id, "status": job.status}
+
+
+@app.post("/api/tools/bundled-flac")
+def use_bundled_flac_tools():
+    return extract_bundled_flac()
 
 
 @app.get("/api/tools/install/{job_id}/events")
