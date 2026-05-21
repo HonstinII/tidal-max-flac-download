@@ -5,7 +5,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_package_assets_exist():
-    assert (ROOT / "assets" / "app_icon.svg").exists()
+    assert (ROOT / "assets" / "app_icon_source.png").exists()
     assert (ROOT / "assets" / "app_icon.png").exists()
     assert (ROOT / "assets" / "app_icon.icns").exists()
     assert (ROOT / "assets" / "app_icon.ico").exists()

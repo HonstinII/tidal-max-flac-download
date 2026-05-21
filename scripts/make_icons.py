@@ -12,63 +12,52 @@ PNG = ASSETS / "app_icon.png"
 ICO = ASSETS / "app_icon.ico"
 ICNS = ASSETS / "app_icon.icns"
 ICONSET = ASSETS / "app_icon.iconset"
+SOURCE = ASSETS / "app_icon_source.png"
 
 
-def rounded_rectangle_icon(size: int = 1024) -> Image.Image:
-    scale = size / 1024
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
+def content_box(source: Image.Image, threshold: int = 190) -> tuple[int, int, int, int]:
+    rgb = source.convert("RGB")
+    pixels = rgb.load()
+    width, height = rgb.size
+    xs: list[int] = []
+    ys: list[int] = []
+    for y in range(0, height, 2):
+        for x in range(0, width, 2):
+            red, green, blue = pixels[x, y]
+            luminance = (red * 299 + green * 587 + blue * 114) // 1000
+            if luminance < threshold:
+                xs.append(x)
+                ys.append(y)
+    if not xs:
+        return (0, 0, width, height)
+    return (min(xs), min(ys), max(xs), max(ys))
 
-    def box(x1: int, y1: int, x2: int, y2: int) -> tuple[int, int, int, int]:
-        return tuple(round(v * scale) for v in (x1, y1, x2, y2))
 
-    def width(v: int) -> int:
-        return max(1, round(v * scale))
+def crop_square_around_content(source: Image.Image) -> Image.Image:
+    left, top, right, bottom = content_box(source)
+    content_width = right - left
+    content_height = bottom - top
+    side = round(max(content_width, content_height) * 1.34)
+    center_x = (left + right) // 2
+    center_y = (top + bottom) // 2
+    source_width, source_height = source.size
+    crop_left = max(0, min(source_width - side, center_x - side // 2))
+    crop_top = max(0, min(source_height - side, center_y - side // 2))
+    return source.crop((crop_left, crop_top, crop_left + side, crop_top + side))
 
-    draw.rounded_rectangle(box(0, 0, 1024, 1024), radius=round(220 * scale), fill="#0E1411")
-    draw.rounded_rectangle(
-        box(42, 42, 982, 982),
-        radius=round(188 * scale),
-        outline=(68, 224, 160, 46),
-        width=width(18),
-    )
-    draw.rounded_rectangle(box(170, 212, 854, 812), radius=round(77 * scale), fill="#14211B")
-    draw.rectangle(box(262, 300, 762, 416), fill="#F5FAF5")
-    draw.rectangle(box(452, 300, 572, 724), fill="#F5FAF5")
 
-    wave = [
-        (256, 616),
-        (312, 616),
-        (312, 548),
-        (368, 548),
-        (423, 548),
-        (423, 684),
-        (479, 684),
-        (535, 684),
-        (535, 548),
-        (591, 548),
-        (646, 548),
-        (646, 616),
-        (702, 616),
-        (758, 616),
-        (758, 548),
-        (814, 548),
-    ]
-    wave = [(round(x * scale), round(y * scale)) for x, y in wave]
-    draw.line(wave, fill="#44E0A0", width=width(38), joint="curve")
-    for point in wave:
-        draw.ellipse(
-            (
-                point[0] - width(19),
-                point[1] - width(19),
-                point[0] + width(19),
-                point[1] + width(19),
-            ),
-            fill="#44E0A0",
-        )
-    draw.line([box(276, 724, 360, 724)[:2], box(276, 724, 360, 724)[2:]], fill="#44E0A0", width=width(38))
-    draw.line([box(664, 724, 748, 724)[:2], box(664, 724, 748, 724)[2:]], fill="#44E0A0", width=width(38))
-    return img
+def source_image_icon(size: int = 1024) -> Image.Image:
+    if not SOURCE.exists():
+        raise FileNotFoundError(f"Missing source icon image: {SOURCE}")
+    crop = crop_square_around_content(Image.open(SOURCE).convert("RGB"))
+    resized = crop.resize((size, size), Image.Resampling.LANCZOS).convert("RGBA")
+    mask = Image.new("L", (size, size), 0)
+    draw = ImageDraw.Draw(mask)
+    draw.rounded_rectangle((0, 0, size, size), radius=round(size * 0.21), fill=255)
+    icon = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    icon.alpha_composite(resized)
+    icon.putalpha(mask)
+    return icon
 
 
 def save_iconset(base: Image.Image) -> None:
@@ -91,7 +80,7 @@ def save_iconset(base: Image.Image) -> None:
 
 def main() -> None:
     ASSETS.mkdir(exist_ok=True)
-    base = rounded_rectangle_icon()
+    base = source_image_icon()
     base.save(PNG)
 
     ico_sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)]
