@@ -1,5 +1,5 @@
 import app.desktop
-from app.desktop import build_app_url, window_options
+from app.desktop import build_app_url, prime_desktop_environment, window_options
 
 
 def test_build_app_url_uses_loopback_port():
@@ -17,3 +17,14 @@ def test_window_options_targets_local_app_url():
 
 def test_desktop_imports_fastapi_app_for_packaging():
     assert app.desktop.fastapi_app.title == "Tidal Max FLAC Studio"
+
+
+def test_prime_desktop_environment_adds_homebrew_paths(monkeypatch):
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+
+    prime_desktop_environment()
+
+    paths = app.desktop.os.environ["PATH"].split(app.desktop.os.pathsep)
+    assert "/opt/homebrew/bin" in paths
+    assert "/usr/local/bin" in paths
+    assert paths.index("/usr/bin") < paths.index("/opt/homebrew/bin")

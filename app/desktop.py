@@ -3,6 +3,7 @@ from __future__ import annotations
 import socket
 import threading
 import time
+import os
 
 import uvicorn
 
@@ -11,6 +12,23 @@ from app.main import app as fastapi_app
 
 HOST = "127.0.0.1"
 TITLE = "Tidal Max FLAC Studio"
+TOOL_PATHS = (
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+    "/usr/bin",
+    "/bin",
+    "/usr/sbin",
+    "/sbin",
+)
+
+
+def prime_desktop_environment() -> None:
+    current_paths = os.environ.get("PATH", "").split(os.pathsep)
+    merged_paths = [path for path in current_paths if path]
+    for path in TOOL_PATHS:
+        if path not in merged_paths:
+            merged_paths.append(path)
+    os.environ["PATH"] = os.pathsep.join(merged_paths)
 
 
 def find_free_port() -> int:
@@ -58,6 +76,7 @@ def wait_for_backend(port: int, timeout_s: float = 10.0) -> None:
 def main() -> None:
     import webview
 
+    prime_desktop_environment()
     port = find_free_port()
     url = build_app_url(port)
     thread = threading.Thread(target=run_backend, args=(port,), daemon=True)
