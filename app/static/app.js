@@ -87,6 +87,7 @@ const copy = {
     recheck: "Recheck",
     platform: "Platform",
     copyCommand: "Copy command",
+    officialDownload: "Official download",
     commandCopied: "Command copied.",
     bundledFlacReady: "Bundled FLAC tools extracted. Rechecking environment...",
     bundledFlacMissing: "Bundled FLAC tools are not included in this build.",
@@ -170,6 +171,7 @@ const copy = {
     recheck: "重新检查",
     platform: "平台",
     copyCommand: "复制命令",
+    officialDownload: "官方下载",
     commandCopied: "命令已复制。",
     bundledFlacReady: "内置 FLAC 工具已解压，正在重新检查环境...",
     bundledFlacMissing: "当前构建未包含内置 FLAC 工具包。",
@@ -614,11 +616,13 @@ async function cancelRun() {
   await refreshQueue();
 }
 
-function addInstallLog(line, command = "") {
+function addInstallLog(line, command = "", url = "") {
   els.installLog.classList.remove("hidden");
   const row = document.createElement("div");
   row.className = "install-row";
   row.textContent = line;
+  const actions = document.createElement("div");
+  actions.className = "install-actions";
   if (command) {
     const button = document.createElement("button");
     button.type = "button";
@@ -628,8 +632,18 @@ function addInstallLog(line, command = "") {
       await navigator.clipboard.writeText(command);
       showToast(t("commandCopied"), "success", 1600);
     });
-    row.append(button);
+    actions.append(button);
   }
+  if (url) {
+    const link = document.createElement("a");
+    link.className = "copy-command";
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.textContent = t("officialDownload");
+    actions.append(link);
+  }
+  if (actions.childNodes.length) row.append(actions);
   els.installLog.append(row);
   els.installLog.scrollTop = els.installLog.scrollHeight;
 }
@@ -645,7 +659,11 @@ async function installMissingTools() {
   state.installEventSource = new EventSource(`/api/tools/install/${job.job_id}/events`);
   state.installEventSource.onmessage = async (message) => {
     const event = JSON.parse(message.data);
-    addInstallLog(event.message || event.label || event.stage, event.copy_command || "");
+    addInstallLog(
+      event.message || event.label || event.stage,
+      event.copy_command || event.manual_command || "",
+      event.manual_url || "",
+    );
     if (event.stage === "complete") {
       state.installEventSource.close();
       els.installToolsButton.disabled = false;
@@ -670,7 +688,7 @@ async function useBundledFlac() {
     showToast(t("coverToolInstalled"), "success", 2500);
   } else {
     showToast(result.message || t("bundledFlacMissing"), "error", 5000);
-    addInstallLog(result.message || t("bundledFlacMissing"));
+    addInstallLog(result.message || t("bundledFlacMissing"), "", result.manual_url || "");
   }
   els.installCoverToolButton.disabled = false;
   await refreshSetup();

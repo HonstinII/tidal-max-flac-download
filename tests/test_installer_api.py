@@ -22,6 +22,11 @@ def test_install_missing_tools_api_streams_command_events(monkeypatch):
                 "ffmpeg": "brew install ffmpeg",
                 "metaflac": "brew install flac",
             },
+            "manual_urls": {
+                "streamrip": "https://github.com/nathom/streamrip",
+                "ffmpeg": "https://ffmpeg.org/download.html",
+                "metaflac": "https://xiph.org/flac/download.html",
+            },
             "streamrip_config": {"path": "/tmp/config.toml", "exists": True},
             "output_dir": "/tmp/music",
             "tidal": {"bound": False},

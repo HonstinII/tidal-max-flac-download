@@ -46,6 +46,7 @@ class EnvironmentInfo:
     tools: dict[str, ToolInfo]
     package_managers: dict[str, PackageManagerInfo]
     manual_commands: dict[str, str]
+    manual_urls: dict[str, str]
     search_paths: list[str]
 
     def to_dict(self) -> dict:
@@ -160,6 +161,7 @@ def detect_environment(platform_name: str | None = None) -> EnvironmentInfo:
         tools=tools,
         package_managers=package_managers,
         manual_commands=manual_commands(system),
+        manual_urls=manual_urls(system),
         search_paths=candidate_tool_paths(system),
     )
 
@@ -177,6 +179,17 @@ def manual_commands(platform_name: str) -> dict[str, str]:
         "ffmpeg": "brew install ffmpeg",
         "metaflac": "brew install flac",
     }
+
+
+def manual_urls(platform_name: str) -> dict[str, str]:
+    urls = {
+        "streamrip": "https://github.com/nathom/streamrip",
+        "ffmpeg": "https://ffmpeg.org/download.html",
+        "metaflac": "https://xiph.org/flac/download.html",
+    }
+    if platform_name == "Darwin":
+        urls["homebrew"] = "https://brew.sh/"
+    return urls
 
 
 def tool_status(platform_name: str | None = None) -> dict[str, bool]:

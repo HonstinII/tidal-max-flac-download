@@ -3,6 +3,7 @@ from pathlib import Path
 from app.environment import candidate_tool_paths
 from app.environment import detect_environment
 from app.environment import find_tool
+from app.environment import manual_urls
 from app.environment import managed_tools_dir
 from app.environment import prime_runtime_path
 
@@ -43,6 +44,26 @@ def test_windows_detection_finds_versioned_python_user_scripts(monkeypatch, tmp_
     monkeypatch.setenv("PATH", "")
 
     assert find_tool("streamrip", "Windows") == str(rip)
+
+
+def test_windows_search_paths_do_not_add_macos_locations(monkeypatch, tmp_path):
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "Local"))
+    monkeypatch.setenv("APPDATA", str(tmp_path / "Roaming"))
+    monkeypatch.setenv("PATH", "")
+
+    paths = candidate_tool_paths("Windows")
+
+    assert "/opt/homebrew/bin" not in paths
+    assert "/usr/local/bin" not in paths
+    assert all("Library/Application Support" not in path for path in paths)
+
+
+def test_manual_urls_include_windows_fallback_sources():
+    urls = manual_urls("Windows")
+
+    assert urls["streamrip"] == "https://github.com/nathom/streamrip"
+    assert urls["ffmpeg"] == "https://ffmpeg.org/download.html"
+    assert urls["metaflac"] == "https://xiph.org/flac/download.html"
 
 
 def test_runtime_search_path_includes_managed_and_homebrew(monkeypatch, tmp_path):

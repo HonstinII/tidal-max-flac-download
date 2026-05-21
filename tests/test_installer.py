@@ -26,6 +26,12 @@ def environment(system, tools, homebrew=False, winget=False):
             "ffmpeg": "install ffmpeg",
             "metaflac": "install flac",
         },
+        "manual_urls": {
+            "homebrew": "https://brew.sh/",
+            "streamrip": "https://github.com/nathom/streamrip",
+            "ffmpeg": "https://ffmpeg.org/download.html",
+            "metaflac": "https://xiph.org/flac/download.html",
+        },
     }
 
 
@@ -91,6 +97,7 @@ def test_macos_install_plan_without_homebrew_returns_manual_guide():
     assert [step.tool for step in plan.steps] == []
     assert plan.manual_guides[0].tool == "homebrew"
     assert plan.manual_guides[0].manual_command == "install homebrew"
+    assert plan.manual_guides[0].manual_url == "https://brew.sh/"
 
 
 def test_macos_missing_only_metaflac_does_not_block_core_install():
@@ -117,6 +124,7 @@ def test_windows_install_plan_uses_winget_for_ffmpeg():
 
     assert [step.tool for step in plan.steps] == ["streamrip", "ffmpeg"]
     assert plan.steps[1].command[:4] == ["winget", "install", "--id", "Gyan.FFmpeg"]
+    assert plan.steps[1].manual_url == "https://ffmpeg.org/download.html"
 
 
 def test_windows_install_plan_without_winget_returns_manual_ffmpeg_guide():
@@ -130,6 +138,7 @@ def test_windows_install_plan_without_winget_returns_manual_ffmpeg_guide():
 
     assert plan.steps == []
     assert plan.manual_guides[0].tool == "ffmpeg"
+    assert plan.manual_guides[0].manual_url == "https://ffmpeg.org/download.html"
 
 
 def test_windows_missing_metaflac_offers_bundled_flac_option():
@@ -143,6 +152,7 @@ def test_windows_missing_metaflac_offers_bundled_flac_option():
 
     assert plan.bundled_options[0].tool == "metaflac"
     assert plan.bundled_options[0].kind == "bundled_flac"
+    assert plan.bundled_options[0].manual_url == "https://xiph.org/flac/download.html"
 
 
 def test_extract_bundled_flac_extracts_zip(tmp_path):
@@ -164,6 +174,7 @@ def test_extract_bundled_flac_missing_zip_returns_guide(tmp_path):
 
     assert result["ok"] is False
     assert "not included" in result["message"]
+    assert result["manual_url"] == "https://xiph.org/flac/download.html"
 
 
 def test_install_job_manager_records_failed_step_command():
@@ -176,3 +187,40 @@ def test_install_job_manager_records_failed_step_command():
 
     failed = [event for event in job.events if event["stage"] == "step_failed"][0]
     assert failed["copy_command"] == "brew install ffmpeg"
+
+
+def test_install_job_manager_failed_structured_plan_includes_manual_fallback():
+    def runner(command, on_line):
+        return 2
+
+    manager = InstallJobManager(runner=runner, platform_name="Windows")
+    job = manager.create_job(
+        environment(
+            "Windows",
+            {"streamrip": False, "ffmpeg": True, "metaflac": True},
+            winget=True,
+        )
+    )
+    manager.run_job(job.job_id)
+
+    failed = [event for event in job.events if event["stage"] == "step_failed"][0]
+    assert failed["manual_command"] == "python -m pip install --user streamrip"
+    assert failed["manual_url"] == "https://github.com/nathom/streamrip"
+
+
+def test_install_job_manager_no_command_emits_manual_guide():
+    manager = InstallJobManager(platform_name="Windows")
+    job = manager.create_job(
+        environment(
+            "Windows",
+            {"streamrip": True, "ffmpeg": False, "metaflac": True},
+            winget=False,
+        )
+    )
+    manager.run_job(job.job_id)
+
+    guide = [event for event in job.events if event["stage"] == "manual_guide"][0]
+    assert guide["tool"] == "ffmpeg"
+    assert guide["copy_command"] == "install ffmpeg"
+    assert guide["manual_url"] == "https://ffmpeg.org/download.html"
+    assert job.events[-1]["stage"] == "failed"

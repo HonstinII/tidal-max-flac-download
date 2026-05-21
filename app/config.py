@@ -45,6 +45,7 @@ def setup_status() -> dict:
         "tools_detail": environment["tools"],
         "package_managers": environment["package_managers"],
         "manual_commands": environment["manual_commands"],
+        "manual_urls": environment["manual_urls"],
         "search_paths": environment["search_paths"],
         "streamrip_config": {
             "path": str(config.streamrip_config),

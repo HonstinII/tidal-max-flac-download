@@ -27,6 +27,7 @@ class InstallStep:
     command: list[str] | None
     required: bool
     manual_command: str | None = None
+    manual_url: str | None = None
     kind: str = "command"
 
 
@@ -81,6 +82,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
     tools = env["tools"]
     managers = env.get("package_managers", {})
     commands = env.get("manual_commands", {})
+    urls = env.get("manual_urls", {})
     steps: list[InstallStep] = []
     manual_guides: list[InstallStep] = []
     bundled_options: list[InstallStep] = []
@@ -99,6 +101,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
                     command=None,
                     required=True,
                     manual_command=commands.get("homebrew"),
+                    manual_url=urls.get("homebrew"),
                     kind="manual",
                 )
             )
@@ -110,6 +113,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
                     command=["python3", "-m", "pip", "install", "--user", "streamrip"],
                     required=True,
                     manual_command=commands.get("streamrip"),
+                    manual_url=urls.get("streamrip"),
                 )
             )
         if homebrew_ok and missing("ffmpeg"):
@@ -120,6 +124,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
                     command=["brew", "install", "ffmpeg"],
                     required=True,
                     manual_command=commands.get("ffmpeg"),
+                    manual_url=urls.get("ffmpeg"),
                 )
             )
     elif system == "Windows":
@@ -131,6 +136,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
                     command=["python", "-m", "pip", "install", "--user", "streamrip"],
                     required=True,
                     manual_command=commands.get("streamrip"),
+                    manual_url=urls.get("streamrip"),
                 )
             )
         winget_ok = managers.get("winget", {}).get("ok", False)
@@ -150,6 +156,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
                     ],
                     required=True,
                     manual_command=commands.get("ffmpeg"),
+                    manual_url=urls.get("ffmpeg"),
                 )
             )
         elif missing("ffmpeg"):
@@ -160,6 +167,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
                     command=None,
                     required=True,
                     manual_command=commands.get("ffmpeg"),
+                    manual_url=urls.get("ffmpeg"),
                     kind="manual",
                 )
             )
@@ -171,6 +179,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
                     command=None,
                     required=False,
                     manual_command=commands.get("metaflac"),
+                    manual_url=urls.get("metaflac"),
                     kind="bundled_flac",
                 )
             )
@@ -205,6 +214,7 @@ def extract_bundled_flac(
             "ok": False,
             "message": "Bundled FLAC tools are not included in this build.",
             "target": str(target_dir),
+            "manual_url": "https://xiph.org/flac/download.html",
         }
     target_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path) as archive:
@@ -234,7 +244,7 @@ class InstallJobManager:
         if {"platform", "tools"}.issubset(tools.keys()):
             plan = build_install_plan(tools)
             commands = plan.commands
-            steps = plan.steps
+            steps = [*plan.steps, *plan.manual_guides]
         else:
             commands = build_install_commands(tools, self.platform_name)
             steps = [
@@ -244,6 +254,7 @@ class InstallJobManager:
                     command=command,
                     required=True,
                     manual_command=" ".join(command),
+                    manual_url=None,
                 )
                 for command in commands
             ]
@@ -262,7 +273,25 @@ class InstallJobManager:
         job = self.jobs[job_id]
         if not job.commands:
             job.status = "failed"
-            job.add_event({"stage": "failed", "message": "No installer is available for this platform."})
+            if job.steps:
+                for step in job.steps:
+                    job.add_event(
+                        {
+                            "stage": "manual_guide",
+                            "tool": step.tool,
+                            "label": step.label,
+                            "manual_command": step.manual_command,
+                            "copy_command": step.manual_command,
+                            "manual_url": step.manual_url,
+                            "message": step.label,
+                        }
+                    )
+            job.add_event(
+                {
+                    "stage": "failed",
+                    "message": "No automatic installer is available. Use the manual guide, then recheck.",
+                }
+            )
             job.queue.put(None)
             return
 
@@ -279,6 +308,8 @@ class InstallJobManager:
                     "label": label,
                     "command": command_text,
                     "copy_command": command_text,
+                    "manual_command": step.manual_command if step else command_text,
+                    "manual_url": step.manual_url if step else None,
                     "message": label,
                 }
             )
@@ -295,6 +326,8 @@ class InstallJobManager:
                         "label": label,
                         "command": command_text,
                         "copy_command": command_text,
+                        "manual_command": step.manual_command if step else command_text,
+                        "manual_url": step.manual_url if step else None,
                         "message": f"{label} exited with {return_code}.",
                     }
                 )
@@ -308,6 +341,8 @@ class InstallJobManager:
                     "label": label,
                     "command": command_text,
                     "copy_command": command_text,
+                    "manual_command": step.manual_command if step else command_text,
+                    "manual_url": step.manual_url if step else None,
                     "message": f"{label} complete.",
                 }
             )

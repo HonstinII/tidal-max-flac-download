@@ -174,7 +174,16 @@ h2 {
   padding: 3px 0;
 }
 
+.install-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .copy-command {
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--line);
   background: var(--panel-2);
   color: var(--text);
@@ -182,6 +191,7 @@ h2 {
   padding: 0 8px;
   cursor: pointer;
   white-space: nowrap;
+  text-decoration: none;
 }
 
 .check,

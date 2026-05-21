@@ -226,6 +226,7 @@ def install_missing_tools():
             "tools": status["tools_detail"],
             "package_managers": status["package_managers"],
             "manual_commands": status["manual_commands"],
+            "manual_urls": status["manual_urls"],
         }
     )
     install_manager.start_job(job.job_id)
