@@ -13,6 +13,8 @@ from .tidal_config import clear_tidal_auth, write_tidal_auth
 from .jobs import DownloadJobManager, JobOptions
 from .folders import open_folder, pick_folder
 from .installer import InstallJobManager, extract_bundled_flac
+from .tidal_api import TidalApi, TrackItem, parse_tidal_url
+from .tidal_config import read_tidal_auth
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
@@ -33,6 +35,10 @@ class JobRequest(BaseModel):
     skip_existing: bool = True
 
 
+class PreviewRequest(BaseModel):
+    urls: list[str]
+
+
 class FolderRequest(BaseModel):
     path: str | None = None
 
@@ -50,6 +56,47 @@ def health():
 @app.get("/api/setup/status")
 def get_setup_status():
     return setup_status()
+
+
+def preview_track(track: TrackItem) -> dict:
+    return {
+        "track_id": track.track_id,
+        "title": track.title,
+        "artist": track.artist,
+        "album_title": track.album_title,
+        "album_artist": track.album_artist,
+        "album_year": track.album_year,
+        "track_number": track.track_number,
+        "cover_id": track.cover_id,
+    }
+
+
+@app.post("/api/preview")
+def preview_urls(request: PreviewRequest):
+    auth = read_tidal_auth(default_config().streamrip_config)
+    api = TidalApi(auth)
+    items = []
+    errors = []
+    for url in request.urls:
+        try:
+            ref = parse_tidal_url(url)
+            tracks = api.resolve(ref)
+            first = tracks[0] if tracks else None
+            items.append(
+                {
+                    "source_url": url,
+                    "kind": ref.kind,
+                    "item_id": ref.item_id,
+                    "track_count": len(tracks),
+                    "album_title": first.album_title if first else "",
+                    "album_artist": first.album_artist if first else "",
+                    "album_year": first.album_year if first else "",
+                    "tracks": [preview_track(track) for track in tracks],
+                }
+            )
+        except Exception as error:
+            errors.append({"url": url, "message": str(error)})
+    return {"items": items, "errors": errors}
 
 
 @app.post("/api/tools/install")
