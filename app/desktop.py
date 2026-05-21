@@ -6,6 +6,8 @@ import time
 
 import uvicorn
 
+from app.main import app as fastapi_app
+
 
 HOST = "127.0.0.1"
 TITLE = "Tidal Max FLAC Studio"
@@ -33,7 +35,7 @@ def window_options(url: str) -> dict:
 
 def run_backend(port: int) -> None:
     config = uvicorn.Config(
-        "app.main:app",
+        fastapi_app,
         host=HOST,
         port=port,
         log_level="info",
