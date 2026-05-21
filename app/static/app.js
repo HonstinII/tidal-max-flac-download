@@ -7,6 +7,7 @@ const state = {
   lastOutputDir: null,
   toastTimer: null,
   authStatus: "",
+  activeRunId: null,
 };
 
 const els = {
@@ -29,11 +30,18 @@ const els = {
   outputDir: document.querySelector("#outputDir"),
   pickFolder: document.querySelector("#pickFolder"),
   openFolder: document.querySelector("#openFolder"),
+  pauseRun: document.querySelector("#pauseRun"),
+  resumeRun: document.querySelector("#resumeRun"),
+  cancelRun: document.querySelector("#cancelRun"),
+  exportLog: document.querySelector("#exportLog"),
   concurrency: document.querySelector("#concurrency"),
   embedCovers: document.querySelector("#embedCovers"),
   embedLyrics: document.querySelector("#embedLyrics"),
-  skipExisting: document.querySelector("#skipExisting"),
+  existingStrategy: document.querySelector("#existingStrategy"),
+  previewButton: document.querySelector("#previewButton"),
+  previewResults: document.querySelector("#previewResults"),
   downloadButton: document.querySelector("#downloadButton"),
+  queueTable: document.querySelector("#queueTable"),
   events: document.querySelector("#events"),
   jobStatus: document.querySelector("#jobStatus"),
   coverToolModal: document.querySelector("#coverToolModal"),
@@ -94,10 +102,20 @@ const copy = {
     segmentConcurrency: "Segment concurrency",
     embedCover: "Embed cover art",
     embedLyrics: "Embed lyrics",
-    skipExisting: "Skip existing files",
+    existingStrategy: "Existing files",
+    strategySkip: "Skip",
+    strategyOverwrite: "Overwrite",
+    strategyKeepBoth: "Keep both",
+    previewUrls: "Preview URLs",
     startDownload: "Start download",
     queue: "Queue",
     sessionEvents: "Session events",
+    pauseRun: "Pause",
+    resumeRun: "Resume",
+    cancelRun: "Cancel",
+    exportLog: "Export log",
+    retry: "Retry",
+    previewEmpty: "Preview is empty.",
     idle: "Idle",
     creatingLink: "Creating Tidal authorization link...",
     opened: "Opened",
@@ -167,10 +185,20 @@ const copy = {
     segmentConcurrency: "分段并发",
     embedCover: "嵌入封面",
     embedLyrics: "嵌入歌词",
-    skipExisting: "跳过已有文件",
+    existingStrategy: "已有文件",
+    strategySkip: "跳过",
+    strategyOverwrite: "覆盖",
+    strategyKeepBoth: "保留两个",
+    previewUrls: "预览链接",
     startDownload: "开始下载",
     queue: "队列",
     sessionEvents: "会话事件",
+    pauseRun: "暂停",
+    resumeRun: "继续",
+    cancelRun: "取消",
+    exportLog: "导出日志",
+    retry: "重试",
+    previewEmpty: "没有预览内容。",
     idle: "空闲",
     creatingLink: "正在创建 Tidal 授权链接...",
     opened: "已打开",
@@ -412,11 +440,64 @@ function toDisplayEvent(event) {
   return null;
 }
 
-async function startDownload() {
-  const urls = els.urlInput.value
+function readUrls() {
+  return els.urlInput.value
     .split(/\s+/)
     .map((url) => url.trim())
     .filter(Boolean);
+}
+
+async function previewUrls() {
+  const urls = readUrls();
+  if (!urls.length) {
+    showToast(t("pasteAtLeastOne"), "error", 3000);
+    return;
+  }
+  els.previewButton.disabled = true;
+  const response = await fetch("/api/preview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ urls }),
+  });
+  const data = await response.json();
+  renderPreview(data);
+  els.previewButton.disabled = false;
+}
+
+function renderPreview(data) {
+  els.previewResults.classList.remove("hidden");
+  if (!data.items?.length && !data.errors?.length) {
+    els.previewResults.textContent = t("previewEmpty");
+    return;
+  }
+  const items = (data.items || []).map((item) => {
+    const tracks = item.tracks.slice(0, 4).map((track) => `<li>${track.track_number || ""} ${track.artist || ""} - ${track.title || ""}</li>`).join("");
+    return `
+      <div class="preview-card">
+        <strong>${item.kind === "album" ? item.album_title : item.tracks[0]?.title || item.item_id}</strong>
+        <span>${item.album_artist || item.tracks[0]?.artist || ""} · ${item.track_count} ${t("tracks")}</span>
+        <ul>${tracks}</ul>
+      </div>
+    `;
+  });
+  const errors = (data.errors || []).map((error) => `<div class="preview-error">${error.url}<br>${error.message}</div>`);
+  els.previewResults.innerHTML = [...items, ...errors].join("");
+}
+
+function queuePayload(urls) {
+  return {
+    urls,
+    output_dir: els.outputDir.value,
+    concurrency: Number(els.concurrency.value || 10),
+    embed_covers: els.embedCovers.checked,
+    embed_lyrics: els.embedLyrics.checked,
+    skip_existing: els.existingStrategy.value === "skip",
+    existing_strategy: els.existingStrategy.value,
+  };
+}
+
+async function startDownload() {
+  const urls = readUrls();
   if (!urls.length) {
     addEvent({ stage: "error", message: t("pasteAtLeastOne") });
     return;
@@ -428,34 +509,109 @@ async function startDownload() {
   els.downloadButton.disabled = true;
   els.openFolder.classList.add("hidden");
   els.events.innerHTML = "";
-  const response = await fetch("/api/jobs", {
+  const response = await fetch("/api/queue", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      urls,
-      output_dir: els.outputDir.value,
-      concurrency: Number(els.concurrency.value || 10),
-      embed_covers: els.embedCovers.checked,
-      embed_lyrics: els.embedLyrics.checked,
-      skip_existing: els.skipExisting.checked,
-    }),
+    body: JSON.stringify(queuePayload(urls)),
   });
-  const job = await response.json();
-  els.jobStatus.textContent = `Job ${job.job_id.slice(0, 8)}`;
+  const data = await response.json();
+  state.activeRunId = data.run.id;
+  els.jobStatus.textContent = `Run ${state.activeRunId.slice(0, 8)}`;
+  updateRunControls("running");
   state.lastOutputDir = els.outputDir.value;
   if (state.eventSource) state.eventSource.close();
-  state.eventSource = new EventSource(`/api/jobs/${job.job_id}/events`);
+  await fetch(`/api/queue/runs/${state.activeRunId}/start`, { method: "POST" });
+  await refreshQueue();
+  state.eventSource = new EventSource(`/api/queue/runs/${state.activeRunId}/events`);
   state.eventSource.onmessage = (message) => {
     const event = JSON.parse(message.data);
     addEvent(event);
+    refreshQueue();
     if (event.stage === "complete" || event.stage === "failed") {
       els.downloadButton.disabled = false;
       if (event.stage === "complete") {
         els.openFolder.classList.remove("hidden");
       }
+      updateRunControls(event.stage);
+      state.eventSource.close();
+    }
+    if (event.stage === "cancelled" || event.stage === "paused") {
+      els.downloadButton.disabled = false;
+      updateRunControls(event.stage);
       state.eventSource.close();
     }
   };
+}
+
+async function refreshQueue() {
+  const response = await fetch("/api/queue");
+  const data = await response.json();
+  renderQueue(data.items || []);
+}
+
+function renderQueue(items) {
+  if (!items.length) {
+    els.queueTable.innerHTML = "";
+    return;
+  }
+  els.queueTable.innerHTML = `
+    <div class="queue-row queue-head">
+      <span>Track</span><span>Status</span><span>Progress</span><span></span>
+    </div>
+    ${items.map(renderQueueRow).join("")}
+  `;
+}
+
+function renderQueueRow(item) {
+  const total = Number(item.progress_total || 0);
+  const current = Number(item.progress_current || 0);
+  const percent = total ? Math.round((current / total) * 100) : 0;
+  const retry = item.status === "failed" ? `<button type="button" class="secondary-button mini-button" data-retry="${item.id}">${t("retry")}</button>` : "";
+  return `
+    <div class="queue-row">
+      <span><strong>${item.artist || ""} - ${item.title || item.track_id || ""}</strong><small>${item.album_title || ""}</small></span>
+      <span>${item.status}</span>
+      <span><span class="progress"><i style="width:${percent}%"></i></span><small>${current}/${total || "-"}</small></span>
+      <span>${retry}</span>
+    </div>
+  `;
+}
+
+function updateRunControls(status) {
+  const hasRun = Boolean(state.activeRunId);
+  els.pauseRun.classList.toggle("hidden", !hasRun || status !== "running");
+  els.resumeRun.classList.toggle("hidden", !hasRun || status !== "paused");
+  els.cancelRun.classList.toggle("hidden", !hasRun || !["running", "paused"].includes(status));
+  els.exportLog.classList.toggle("hidden", !hasRun);
+  if (hasRun) {
+    els.exportLog.href = `/api/logs/${state.activeRunId}.txt`;
+  }
+}
+
+async function retryQueueItem(itemId) {
+  await fetch(`/api/queue/items/${itemId}/retry`, { method: "POST" });
+  await refreshQueue();
+}
+
+async function pauseRun() {
+  if (!state.activeRunId) return;
+  await fetch(`/api/queue/runs/${state.activeRunId}/pause`, { method: "POST" });
+  updateRunControls("paused");
+  await refreshQueue();
+}
+
+async function resumeRun() {
+  if (!state.activeRunId) return;
+  await fetch(`/api/queue/runs/${state.activeRunId}/resume`, { method: "POST" });
+  updateRunControls("running");
+  await refreshQueue();
+}
+
+async function cancelRun() {
+  if (!state.activeRunId) return;
+  await fetch(`/api/queue/runs/${state.activeRunId}/cancel`, { method: "POST" });
+  updateRunControls("cancelled");
+  await refreshQueue();
 }
 
 function addInstallLog(line, command = "") {
@@ -554,7 +710,15 @@ function toggleAccountMenu() {
 }
 
 els.bindButton.addEventListener("click", startBinding);
+els.previewButton.addEventListener("click", previewUrls);
 els.downloadButton.addEventListener("click", startDownload);
+els.pauseRun.addEventListener("click", pauseRun);
+els.resumeRun.addEventListener("click", resumeRun);
+els.cancelRun.addEventListener("click", cancelRun);
+els.queueTable.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-retry]");
+  if (button) retryQueueItem(button.dataset.retry);
+});
 els.installToolsButton.addEventListener("click", installMissingTools);
 els.installCoverToolButton.addEventListener("click", useBundledFlac);
 els.cancelCoverToolButton.addEventListener("click", () => {
@@ -607,4 +771,5 @@ els.openFolder.addEventListener("click", async () => {
 refreshSetup().catch((error) => {
   els.bindMessage.textContent = `Startup failed: ${error.message}`;
 });
+refreshQueue().catch(() => {});
 applyLanguage();

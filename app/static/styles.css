@@ -28,7 +28,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -130,6 +131,12 @@ h2 {
 .install-button {
   margin-top: 14px;
   margin-right: 8px;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .install-log {
@@ -244,6 +251,17 @@ h2 {
   min-height: 42px;
   padding: 0 12px;
   cursor: pointer;
+}
+
+.secondary-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  background: #111714;
+  color: var(--text);
+  padding: 0 12px;
+  text-decoration: none;
 }
 
 .primary-button:disabled {
@@ -402,7 +420,8 @@ label {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+select {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
@@ -427,6 +446,81 @@ input[type="number"] {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 18px;
+}
+
+.preview-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.preview-card,
+.preview-error {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--muted);
+  padding: 12px;
+}
+
+.preview-card strong {
+  display: block;
+  color: var(--text);
+}
+
+.preview-card ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.preview-error {
+  border-color: var(--error);
+}
+
+.queue-table {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.queue-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) 100px minmax(120px, 0.8fr) 74px;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  padding: 10px 12px;
+  color: var(--muted);
+}
+
+.queue-head {
+  background: #111714;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.queue-row strong,
+.queue-row small {
+  display: block;
+}
+
+.progress {
+  display: block;
+  height: 8px;
+  background: #0e1210;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.progress i {
+  display: block;
+  height: 100%;
+  background: var(--meter);
+}
+
+.mini-button {
+  min-height: 32px;
+  padding: 0 9px;
 }
 
 @media (max-width: 860px) {
