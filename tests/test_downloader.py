@@ -7,10 +7,12 @@ import pytest
 from app.downloader import (
     DownloadOptions,
     NoFlacRepresentation,
+    build_output_path,
     prepare_output_path,
     parse_flac_dash_manifest,
     safe_name,
 )
+from app.tidal_api import TrackItem
 
 
 def encoded_mpd(codec="flac"):
@@ -83,3 +85,37 @@ def test_prepare_output_path_keeps_both_files(tmp_path):
 
     assert prepared == tmp_path / "song (3).flac"
     assert status == "download"
+
+
+def test_build_output_path_uses_album_and_filename_templates(tmp_path):
+    track = TrackItem(
+        track_id="1",
+        title="Bad/Name",
+        artist="Artist",
+        album_title="Album",
+        album_artist="Album Artist",
+        album_year="2026",
+        cover_id=None,
+        track_number=3,
+    )
+
+    output = build_output_path(track, DownloadOptions(output_dir=tmp_path))
+
+    assert output == tmp_path / "Album Artist" / "Album (2026)" / "03. Artist - BadName.flac"
+
+
+def test_build_output_path_uses_single_template_without_track_number(tmp_path):
+    track = TrackItem(
+        track_id="1",
+        title="Song",
+        artist="Artist",
+        album_title="",
+        album_artist="",
+        album_year="",
+        cover_id=None,
+        track_number=None,
+    )
+
+    output = build_output_path(track, DownloadOptions(output_dir=tmp_path))
+
+    assert output == tmp_path / "Artist - Song.flac"

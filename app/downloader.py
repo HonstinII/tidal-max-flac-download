@@ -32,6 +32,9 @@ class DownloadOptions:
     concurrency: int = 10
     skip_existing: bool = True
     existing_strategy: Literal["skip", "overwrite", "keep_both"] | None = None
+    album_template: str = "{album_artist}/{album} ({year})"
+    filename_template: str = "{track_number}. {artist} - {title}"
+    single_filename_template: str = "{artist} - {title}"
 
 
 @dataclass(frozen=True)
@@ -45,6 +48,32 @@ def safe_name(value: str) -> str:
     value = re.sub(r'[\\/:*?"<>|]+', "", value)
     value = re.sub(r"\s+", " ", value).strip()
     return value[:180] or "untitled"
+
+
+def track_tokens(track: TrackItem) -> dict[str, str]:
+    track_number = f"{track.track_number:02d}" if track.track_number is not None else ""
+    return {
+        "title": track.title or str(track.track_id),
+        "artist": track.artist or "Unknown Artist",
+        "album": track.album_title or "Unknown Album",
+        "album_artist": track.album_artist or track.artist or "Unknown Artist",
+        "year": track.album_year or "",
+        "track_number": track_number,
+        "track_id": str(track.track_id),
+    }
+
+
+def render_template(template: str, track: TrackItem) -> str:
+    values = track_tokens(track)
+    rendered = template
+    for key, value in values.items():
+        rendered = rendered.replace("{" + key + "}", value)
+    return rendered
+
+
+def safe_relative_path(value: str) -> Path:
+    parts = [safe_name(part) for part in re.split(r"[\\/]+", value) if part.strip()]
+    return Path(*parts) if parts else Path("untitled")
 
 
 def parse_flac_dash_manifest(manifest_b64: str) -> FlacDashManifest:
@@ -75,14 +104,19 @@ def parse_flac_dash_manifest(manifest_b64: str) -> FlacDashManifest:
     )
 
 
-def build_output_path(track: TrackItem, output_dir: Path) -> Path:
+def build_output_path(track: TrackItem, options_or_output_dir: DownloadOptions | Path) -> Path:
+    if isinstance(options_or_output_dir, DownloadOptions):
+        options = options_or_output_dir
+        output_dir = options.output_dir
+    else:
+        options = DownloadOptions(options_or_output_dir)
+        output_dir = options_or_output_dir
     if track.track_number is not None:
-        folder = safe_name(
-            f"{track.album_artist} - {track.album_title} ({track.album_year})"
-        )
-        prefix = f"{track.track_number:02d}. "
-        return output_dir / folder / f"{prefix}{safe_name(track.artist)} - {safe_name(track.title)}.flac"
-    return output_dir / f"{safe_name(track.artist)} - {safe_name(track.title)}.flac"
+        folder = safe_relative_path(render_template(options.album_template, track))
+        filename = safe_name(render_template(options.filename_template, track))
+        return output_dir / folder / f"{filename}.flac"
+    filename = safe_name(render_template(options.single_filename_template, track))
+    return output_dir / f"{filename}.flac"
 
 
 def prepare_output_path(output: Path, options: DownloadOptions) -> tuple[Path, str]:
@@ -113,7 +147,7 @@ def download_track_as_flac(
     emit: Callable[[dict], None] | None = None,
 ) -> DownloadResult:
     emit = emit or (lambda event: None)
-    output = build_output_path(track, options.output_dir)
+    output = build_output_path(track, options)
     output.parent.mkdir(parents=True, exist_ok=True)
     output, output_status = prepare_output_path(output, options)
     output.parent.mkdir(parents=True, exist_ok=True)

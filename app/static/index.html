@@ -97,6 +97,30 @@
               <input id="embedLyrics" type="checkbox" checked />
               <span data-i18n="embedLyrics">Embed lyrics</span>
             </label>
+            <label>
+              <span data-i18n="lyricsMode">Lyrics mode</span>
+              <select id="lyricsMode">
+                <option value="auto" data-i18n="lyricsAuto">Auto</option>
+                <option value="synced" data-i18n="lyricsSynced">Synced</option>
+                <option value="plain" data-i18n="lyricsPlain">Plain</option>
+              </select>
+            </label>
+            <label class="toggle">
+              <input id="writeLrc" type="checkbox" checked />
+              <span data-i18n="writeLrc">Write .lrc file</span>
+            </label>
+            <label class="wide-control">
+              <span data-i18n="albumTemplate">Album folder template</span>
+              <input id="albumTemplate" type="text" value="{album_artist}/{album} ({year})" />
+            </label>
+            <label class="wide-control">
+              <span data-i18n="filenameTemplate">Album file template</span>
+              <input id="filenameTemplate" type="text" value="{track_number}. {artist} - {title}" />
+            </label>
+            <label class="wide-control">
+              <span data-i18n="singleFilenameTemplate">Single file template</span>
+              <input id="singleFilenameTemplate" type="text" value="{artist} - {title}" />
+            </label>
           </div>
           <div class="button-row">
             <button id="previewButton" class="secondary-button" data-i18n="previewUrls">Preview URLs</button>

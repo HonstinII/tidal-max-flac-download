@@ -4,8 +4,13 @@ import subprocess
 from mutagen.flac import FLAC
 
 
-def extract_lyrics_text(payload: dict) -> str:
-    lyrics = str(payload.get("subtitles") or payload.get("lyrics") or "").strip()
+def extract_lyrics_text(payload: dict, mode: str = "auto") -> str:
+    if mode == "synced":
+        lyrics = str(payload.get("subtitles") or "").strip()
+    elif mode == "plain":
+        lyrics = str(payload.get("lyrics") or "").strip()
+    else:
+        lyrics = str(payload.get("subtitles") or payload.get("lyrics") or "").strip()
     return "" if is_placeholder_lyrics(lyrics) else lyrics
 
 
@@ -32,3 +37,11 @@ def embed_lyrics(flac_path: Path, lyrics: str | None) -> bool:
     audio["LYRICS"] = lyrics
     audio.save()
     return True
+
+
+def write_lrc(flac_path: Path, lyrics: str | None) -> Path | None:
+    if not lyrics:
+        return None
+    lrc_path = flac_path.with_suffix(".lrc")
+    lrc_path.write_text(lyrics.rstrip() + "\n", encoding="utf-8")
+    return lrc_path

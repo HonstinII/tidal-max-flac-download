@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.lyrics import build_set_lyrics_command, extract_lyrics_text, is_placeholder_lyrics
+from app.lyrics import build_set_lyrics_command, extract_lyrics_text, is_placeholder_lyrics, write_lrc
 
 
 def test_extract_lyrics_prefers_synced_subtitles():
@@ -9,6 +9,22 @@ def test_extract_lyrics_prefers_synced_subtitles():
 
 def test_extract_lyrics_falls_back_to_plain_lyrics():
     assert extract_lyrics_text({"lyrics": "plain"}) == "plain"
+
+
+def test_extract_lyrics_can_force_plain_mode():
+    payload = {"subtitles": "[00:01.00] synced", "lyrics": "plain"}
+
+    assert extract_lyrics_text(payload, mode="plain") == "plain"
+
+
+def test_extract_lyrics_can_force_synced_mode():
+    payload = {"subtitles": "[00:01.00] synced", "lyrics": "plain"}
+
+    assert extract_lyrics_text(payload, mode="synced") == "[00:01.00] synced"
+
+
+def test_extract_lyrics_synced_mode_does_not_fallback_to_plain():
+    assert extract_lyrics_text({"lyrics": "plain"}, mode="synced") == ""
 
 
 def test_extract_lyrics_rejects_hash_placeholder_text():
@@ -28,3 +44,12 @@ def test_build_set_lyrics_command_writes_vorbis_comment():
         "--set-tag=LYRICS=hello",
         "/tmp/song.flac",
     ]
+
+
+def test_write_lrc_creates_same_stem_sidecar(tmp_path):
+    flac = tmp_path / "song.flac"
+
+    lrc = write_lrc(flac, "[00:01.00] line")
+
+    assert lrc == tmp_path / "song.lrc"
+    assert lrc.read_text(encoding="utf-8") == "[00:01.00] line\n"

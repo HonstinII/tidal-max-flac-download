@@ -30,6 +30,9 @@ class FakeApi:
     def get_lyrics(self, track_id):
         return ""
 
+    def get_lyrics_payload(self, track_id):
+        return {"subtitles": "[00:01.00] synced", "lyrics": "plain"}
+
     def get(self, path, params=None):
         return {"manifest": "unused"}
 
@@ -91,6 +94,53 @@ def test_queue_worker_updates_item_progress_and_completion(monkeypatch, tmp_path
     assert item["progress_total"] == 2
     assert item["output_path"] == str(tmp_path / "Song.flac")
     assert db.get_run(run["id"])["status"] == "complete"
+    assert any(event["stage"] == "downloaded" for event in manager.run_events[run["id"]])
+
+
+def test_queue_worker_runs_metadata_postprocessing(monkeypatch, tmp_path):
+    db = AppDatabase(tmp_path / "queue.db")
+    db.initialize()
+    calls = []
+
+    def fake_downloader(track, manifest, options, headers, emit):
+        calls.append(("templates", options.album_template, options.filename_template, options.single_filename_template))
+        output = tmp_path / "Song.flac"
+        output.write_text("audio")
+        return DownloadResult(track.track_id, output, "complete")
+
+    monkeypatch.setattr("app.jobs.parse_flac_dash_manifest", lambda manifest: manifest)
+    monkeypatch.setattr("app.jobs.embed_cover", lambda *args, **kwargs: calls.append(("cover", args[0])) or True)
+    monkeypatch.setattr("app.jobs.embed_lyrics", lambda *args, **kwargs: calls.append(("lyrics", args[1])) or True)
+    monkeypatch.setattr("app.jobs.write_lrc", lambda *args, **kwargs: calls.append(("lrc", args[1])) or (tmp_path / "Song.lrc"))
+    monkeypatch.setattr("app.jobs.repair_flac_tags", lambda *args, **kwargs: calls.append(("repair", args[1].title)) or True)
+    monkeypatch.setattr("app.jobs.has_cover", lambda *args, **kwargs: False)
+    manager = DownloadJobManager(
+        database=db,
+        auth_reader=lambda path: Auth(),
+        api_factory=FakeApi,
+        downloader=fake_downloader,
+    )
+    run = manager.create_run_from_urls(
+        ["https://tidal.com/track/1"],
+        JobOptions(
+            output_dir=tmp_path,
+            embed_covers=True,
+            embed_lyrics=True,
+            write_lrc=True,
+            lyrics_mode="synced",
+            album_template="{album_artist}/{album} ({year})",
+            filename_template="{track_number}. {artist} - {title}",
+            single_filename_template="{artist} - {title}",
+        ),
+    )
+
+    manager._run_queue(run["id"])
+
+    assert ("templates", "{album_artist}/{album} ({year})", "{track_number}. {artist} - {title}", "{artist} - {title}") in calls
+    assert ("cover", tmp_path / "Song.flac") in calls
+    assert ("lyrics", "[00:01.00] synced") in calls
+    assert ("lrc", "[00:01.00] synced") in calls
+    assert ("repair", "Song") in calls
 
 
 def test_queue_worker_marks_single_item_failed_and_completes_run(monkeypatch, tmp_path):

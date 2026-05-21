@@ -71,6 +71,11 @@ class TidalApi:
         return response.json()
 
     def get_lyrics(self, track_id: str) -> str:
+        from .lyrics import extract_lyrics_text
+
+        return extract_lyrics_text(self.get_lyrics_payload(track_id))
+
+    def get_lyrics_payload(self, track_id: str) -> dict:
         response = self.session.get(
             f"{LYRICS_URL}/tracks/{track_id}/lyrics",
             headers={"authorization": f"Bearer {self.auth.access_token}"},
@@ -78,11 +83,9 @@ class TidalApi:
             timeout=30,
         )
         if response.status_code in {401, 404}:
-            return ""
+            return {}
         response.raise_for_status()
-        from .lyrics import extract_lyrics_text
-
-        return extract_lyrics_text(response.json())
+        return response.json()
 
     def _track_item(
         self, track: dict, album: dict | None, track_number: int | None

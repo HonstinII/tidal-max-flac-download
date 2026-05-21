@@ -446,6 +446,10 @@ select {
   gap: 8px;
 }
 
+.wide-control {
+  grid-column: 1 / -1;
+}
+
 .toggle {
   grid-template-columns: 18px 1fr;
   align-items: center;

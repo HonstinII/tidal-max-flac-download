@@ -10,7 +10,8 @@ from typing import Callable, Iterable
 from .config import default_config
 from .covers import embed_cover
 from .downloader import DownloadOptions, download_track_as_flac, parse_flac_dash_manifest
-from .lyrics import embed_lyrics
+from .lyrics import embed_lyrics, extract_lyrics_text, write_lrc
+from .metadata import has_cover, repair_flac_tags
 from .storage import AppDatabase
 from .tidal_api import TidalApi, TrackItem, parse_tidal_url
 from .tidal_config import read_tidal_auth
@@ -22,8 +23,13 @@ class JobOptions:
     concurrency: int = 10
     embed_covers: bool = True
     embed_lyrics: bool = True
+    write_lrc: bool = False
+    lyrics_mode: str = "auto"
     skip_existing: bool = True
     existing_strategy: str | None = None
+    album_template: str = "{album_artist}/{album} ({year})"
+    filename_template: str = "{track_number}. {artist} - {title}"
+    single_filename_template: str = "{artist} - {title}"
 
 
 @dataclass
@@ -136,8 +142,13 @@ class DownloadJobManager:
                 "concurrency": options.concurrency,
                 "embed_covers": options.embed_covers,
                 "embed_lyrics": options.embed_lyrics,
+                "write_lrc": options.write_lrc,
+                "lyrics_mode": options.lyrics_mode,
                 "skip_existing": options.skip_existing,
                 "existing_strategy": existing_strategy,
+                "album_template": options.album_template,
+                "filename_template": options.filename_template,
+                "single_filename_template": options.single_filename_template,
             },
         )
         for url in urls:
@@ -194,9 +205,13 @@ class DownloadJobManager:
             {"stage": "downloading", "item_id": item["id"], "track_id": track.track_id, "title": track.title, "artist": track.artist},
         )
         lyrics = ""
-        if options.get("embed_lyrics", True):
+        if options.get("embed_lyrics", True) or options.get("write_lrc", False):
             try:
-                lyrics = api.get_lyrics(track.track_id)
+                if hasattr(api, "get_lyrics_payload"):
+                    lyrics_payload = api.get_lyrics_payload(track.track_id)
+                    lyrics = extract_lyrics_text(lyrics_payload, mode=options.get("lyrics_mode", "auto"))
+                else:
+                    lyrics = api.get_lyrics(track.track_id)
             except Exception as error:
                 self.emit_run(run_id, {"stage": "lyrics_unavailable", "item_id": item["id"], "message": str(error)})
         playback = api.get(
@@ -237,6 +252,9 @@ class DownloadJobManager:
                 concurrency=int(options.get("concurrency") or 10),
                 skip_existing=bool(options.get("skip_existing", True)),
                 existing_strategy=options.get("existing_strategy") or "skip",
+                album_template=options.get("album_template") or "{album_artist}/{album} ({year})",
+                filename_template=options.get("filename_template") or "{track_number}. {artist} - {title}",
+                single_filename_template=options.get("single_filename_template") or "{artist} - {title}",
             ),
             headers,
             emit_download,
@@ -244,11 +262,23 @@ class DownloadJobManager:
         status = "skipped" if result.status == "skipped" else "postprocessing"
         self.database.update_queue_item(item["id"], status=status, output_path=str(result.output_path))
         if options.get("embed_covers", True) and result.status != "skipped":
-            embed_cover(result.output_path, track.cover_id, Path(run["output_dir"]) / ".covers")
+            self._warn_if_fails(
+                run_id,
+                item["id"],
+                "cover",
+                lambda: embed_cover(result.output_path, track.cover_id, Path(run["output_dir"]) / ".covers")
+                if not has_cover(result.output_path)
+                else True,
+            )
             self.emit_run(run_id, {"stage": "cover", "item_id": item["id"], "track_id": track.track_id})
         if options.get("embed_lyrics", True) and lyrics and result.status != "skipped":
-            if embed_lyrics(result.output_path, lyrics):
+            if self._warn_if_fails(run_id, item["id"], "lyrics", lambda: embed_lyrics(result.output_path, lyrics)):
                 self.emit_run(run_id, {"stage": "lyrics", "item_id": item["id"], "track_id": track.track_id})
+        if options.get("write_lrc", False) and lyrics and result.status != "skipped":
+            if self._warn_if_fails(run_id, item["id"], "lrc", lambda: write_lrc(result.output_path, lyrics)):
+                self.emit_run(run_id, {"stage": "lrc", "item_id": item["id"], "track_id": track.track_id})
+        if result.status != "skipped":
+            self._warn_if_fails(run_id, item["id"], "metadata", lambda: repair_flac_tags(result.output_path, track))
         final_status = "skipped" if result.status == "skipped" else "complete"
         self.database.update_queue_item(
             item["id"],
@@ -266,6 +296,13 @@ class DownloadJobManager:
                 "artist": track.artist,
             },
         )
+
+    def _warn_if_fails(self, run_id: str, item_id: str, stage: str, action: Callable[[], object]) -> object:
+        try:
+            return action()
+        except Exception as error:
+            self.emit_run(run_id, {"stage": "warning", "item_id": item_id, "kind": stage, "message": str(error)})
+            return False
 
     def pause_run(self, run_id: str) -> dict | None:
         run = self.database.update_run(run_id, status="paused")

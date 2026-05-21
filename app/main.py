@@ -37,6 +37,8 @@ class JobRequest(BaseModel):
     concurrency: int = 10
     embed_covers: bool = True
     embed_lyrics: bool = True
+    write_lrc: bool = False
+    lyrics_mode: str = "auto"
     skip_existing: bool = True
 
 
@@ -50,8 +52,13 @@ class QueueRequest(BaseModel):
     concurrency: int = 10
     embed_covers: bool = True
     embed_lyrics: bool = True
+    write_lrc: bool = False
+    lyrics_mode: str = "auto"
     skip_existing: bool = True
     existing_strategy: str = "skip"
+    album_template: str = "{album_artist}/{album} ({year})"
+    filename_template: str = "{track_number}. {artist} - {title}"
+    single_filename_template: str = "{artist} - {title}"
 
 
 class FolderRequest(BaseModel):
@@ -124,8 +131,13 @@ def create_queue(request: QueueRequest):
         "concurrency": request.concurrency,
         "embed_covers": request.embed_covers,
         "embed_lyrics": request.embed_lyrics,
+        "write_lrc": request.write_lrc,
+        "lyrics_mode": request.lyrics_mode,
         "existing_strategy": request.existing_strategy,
         "skip_existing": request.skip_existing,
+        "album_template": request.album_template,
+        "filename_template": request.filename_template,
+        "single_filename_template": request.single_filename_template,
     }
     run = database.create_run(run_id, "queued", output_dir, options)
     items = []
@@ -287,7 +299,12 @@ def create_job(request: JobRequest):
         concurrency=request.concurrency,
         embed_covers=request.embed_covers,
         embed_lyrics=request.embed_lyrics,
+        write_lrc=request.write_lrc,
+        lyrics_mode=request.lyrics_mode,
         skip_existing=request.skip_existing,
+        album_template=getattr(request, "album_template", "{album_artist}/{album} ({year})"),
+        filename_template=getattr(request, "filename_template", "{track_number}. {artist} - {title}"),
+        single_filename_template=getattr(request, "single_filename_template", "{artist} - {title}"),
     )
     job = job_manager.create_job(request.urls, options)
     job_manager.start_job(job.job_id)
