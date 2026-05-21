@@ -37,9 +37,16 @@
             Core tools must be ready before the downloader opens. Optional tools
             only affect cover or metadata extras.
           </p>
+          <div id="platformInfo" class="platform-info"></div>
           <div id="checks" class="check-list"></div>
           <button id="installToolsButton" type="button" class="secondary-button install-button hidden" data-i18n="installMissing">
             Install missing tools
+          </button>
+          <button id="bundledFlacButton" type="button" class="secondary-button install-button hidden" data-i18n="useBundledFlac">
+            Use bundled FLAC tools
+          </button>
+          <button id="recheckButton" type="button" class="secondary-button install-button" data-i18n="recheck">
+            Recheck
           </button>
           <div id="installLog" class="install-log hidden"></div>
         </div>

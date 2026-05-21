@@ -19,7 +19,10 @@ const els = {
   setupPanel: document.querySelector("#setupPanel"),
   workspace: document.querySelector("#workspace"),
   checks: document.querySelector("#checks"),
+  platformInfo: document.querySelector("#platformInfo"),
   installToolsButton: document.querySelector("#installToolsButton"),
+  bundledFlacButton: document.querySelector("#bundledFlacButton"),
+  recheckButton: document.querySelector("#recheckButton"),
   installLog: document.querySelector("#installLog"),
   bindButton: document.querySelector("#bindButton"),
   bindMessage: document.querySelector("#bindMessage"),
@@ -62,6 +65,13 @@ const copy = {
     checkMetaflac: "Optional metadata helper for embedding cover art into FLAC files.",
     checkConfig: "Core local config file used to store Tidal authorization safely.",
     installMissing: "Install missing tools",
+    useBundledFlac: "Use bundled FLAC tools",
+    recheck: "Recheck",
+    platform: "Platform",
+    copyCommand: "Copy command",
+    commandCopied: "Command copied.",
+    bundledFlacReady: "Bundled FLAC tools extracted. Rechecking environment...",
+    bundledFlacMissing: "Bundled FLAC tools are not included in this build.",
     installingTools: "Installing missing tools...",
     installComplete: "Tool installation complete. Rechecking environment...",
     installFailed: "Tool installation failed.",
@@ -120,6 +130,13 @@ const copy = {
     checkMetaflac: "可选元数据工具，用来把封面嵌入 FLAC 文件。",
     checkConfig: "核心本地配置文件，用来安全保存 Tidal 授权。",
     installMissing: "安装缺失工具",
+    useBundledFlac: "使用内置 FLAC 工具",
+    recheck: "重新检查",
+    platform: "平台",
+    copyCommand: "复制命令",
+    commandCopied: "命令已复制。",
+    bundledFlacReady: "内置 FLAC 工具已解压，正在重新检查环境...",
+    bundledFlacMissing: "当前构建未包含内置 FLAC 工具包。",
     installingTools: "正在安装缺失工具...",
     installComplete: "工具安装完成，正在重新检查环境...",
     installFailed: "工具安装失败。",
@@ -184,10 +201,11 @@ function applyLanguage() {
   }
 }
 
-function checkRow({ label, ok, detail, description, required }) {
+function checkRow({ label, ok, detail, description, required, path }) {
   const stateClass = ok ? "ok" : required ? "bad" : "warn";
   const stateText = ok ? t("ready") : t("missing");
   const requirement = required ? t("core") : t("optional");
+  const toolPath = path ? `<small>${path}</small>` : "";
   return `
     <div class="check ${required ? "required" : "optional"}">
       <div class="check-head">
@@ -196,6 +214,7 @@ function checkRow({ label, ok, detail, description, required }) {
       </div>
       <p>${description}</p>
       <span class="${stateClass}">${stateText}</span> ${detail || ""}
+      ${toolPath}
     </div>
   `;
 }
@@ -213,6 +232,13 @@ function missingInstallableTools() {
   return ["streamrip", "ffmpeg", "metaflac"].filter((tool) => !state.setup.tools?.[tool]);
 }
 
+function showBundledFlacOption() {
+  return Boolean(
+    state.setup?.platform?.system === "Windows" &&
+      state.setup?.tools?.metaflac === false,
+  );
+}
+
 async function refreshSetup() {
   const response = await fetch("/api/setup/status");
   state.setup = await response.json();
@@ -222,27 +248,33 @@ async function refreshSetup() {
 }
 
 function renderChecks() {
+  const platform = state.setup.platform?.name || state.setup.platform?.system || "";
+  els.platformInfo.textContent = platform ? `${t("platform")}: ${platform}` : "";
+  const details = state.setup.tools_detail || {};
   els.checks.innerHTML = [
     checkRow({
       label: "streamrip",
       ok: state.setup.tools.streamrip,
       detail: state.setup.tools.streamrip ? "" : t("notFound"),
-      description: t("checkStreamrip"),
+      description: details.streamrip?.description || t("checkStreamrip"),
       required: true,
+      path: details.streamrip?.path,
     }),
     checkRow({
       label: "ffmpeg",
       ok: state.setup.tools.ffmpeg,
       detail: state.setup.tools.ffmpeg ? "" : t("notFound"),
-      description: t("checkFfmpeg"),
+      description: details.ffmpeg?.description || t("checkFfmpeg"),
       required: true,
+      path: details.ffmpeg?.path,
     }),
     checkRow({
       label: "metaflac",
       ok: state.setup.tools.metaflac,
       detail: state.setup.tools.metaflac ? "" : t("notFound"),
-      description: t("checkMetaflac"),
+      description: details.metaflac?.description || t("checkMetaflac"),
       required: false,
+      path: details.metaflac?.path,
     }),
     checkRow({
       label: "streamrip config",
@@ -253,6 +285,7 @@ function renderChecks() {
     }),
   ].join("");
   els.installToolsButton.classList.toggle("hidden", missingInstallableTools().length === 0);
+  els.bundledFlacButton.classList.toggle("hidden", !showBundledFlacOption());
 }
 
 function renderMode() {
@@ -419,10 +452,22 @@ async function startDownload() {
   };
 }
 
-function addInstallLog(line) {
+function addInstallLog(line, command = "") {
   els.installLog.classList.remove("hidden");
   const row = document.createElement("div");
+  row.className = "install-row";
   row.textContent = line;
+  if (command) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "copy-command";
+    button.textContent = t("copyCommand");
+    button.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(command);
+      showToast(t("commandCopied"), "success", 1600);
+    });
+    row.append(button);
+  }
   els.installLog.append(row);
   els.installLog.scrollTop = els.installLog.scrollHeight;
 }
@@ -438,7 +483,7 @@ async function installMissingTools() {
   state.installEventSource = new EventSource(`/api/tools/install/${job.job_id}/events`);
   state.installEventSource.onmessage = async (message) => {
     const event = JSON.parse(message.data);
-    addInstallLog(event.message || event.stage);
+    addInstallLog(event.message || event.label || event.stage, event.copy_command || "");
     if (event.stage === "complete") {
       state.installEventSource.close();
       els.installToolsButton.disabled = false;
@@ -452,6 +497,20 @@ async function installMissingTools() {
       await refreshSetup();
     }
   };
+}
+
+async function useBundledFlac() {
+  els.bundledFlacButton.disabled = true;
+  const response = await fetch("/api/tools/bundled-flac", { method: "POST" });
+  const result = await response.json();
+  if (result.ok) {
+    showToast(t("bundledFlacReady"), "success", 2500);
+  } else {
+    showToast(result.message || t("bundledFlacMissing"), "error", 5000);
+    addInstallLog(result.message || t("bundledFlacMissing"));
+  }
+  els.bundledFlacButton.disabled = false;
+  await refreshSetup();
 }
 
 async function unbindTidal() {
@@ -478,6 +537,8 @@ function toggleAccountMenu() {
 els.bindButton.addEventListener("click", startBinding);
 els.downloadButton.addEventListener("click", startDownload);
 els.installToolsButton.addEventListener("click", installMissingTools);
+els.bundledFlacButton.addEventListener("click", useBundledFlac);
+els.recheckButton.addEventListener("click", refreshSetup);
 els.workspaceAccountButton.addEventListener("click", toggleAccountMenu);
 els.unbindButton.addEventListener("click", unbindTidal);
 document.addEventListener("click", (event) => {

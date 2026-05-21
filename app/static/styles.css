@@ -129,6 +129,7 @@ h2 {
 
 .install-button {
   margin-top: 14px;
+  margin-right: 8px;
 }
 
 .install-log {
@@ -142,6 +143,38 @@ h2 {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.platform-info {
+  border: 1px solid var(--line);
+  background: #111714;
+  color: var(--muted);
+  padding: 9px 12px;
+  margin: 12px 0;
+}
+
+.check small {
+  display: block;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.install-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  padding: 3px 0;
+}
+
+.copy-command {
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  min-height: 28px;
+  padding: 0 8px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .check,
