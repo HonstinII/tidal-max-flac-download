@@ -86,6 +86,23 @@
                 <input id="embedLyrics" type="checkbox" checked />
                 <span data-i18n="embedLyrics">Embed lyrics</span>
               </label>
+              <div class="quality-select" id="audioQualityControl">
+                <button id="audioQualityButton" class="quality-button" type="button" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="audioQualityLabel">Max</span>
+                  <span class="quality-arrow" aria-hidden="true"></span>
+                </button>
+                <div id="audioQualityMenu" class="quality-menu hidden" role="listbox">
+                  <p class="quality-note" data-i18n="qualityAccountNote">Maximum quality depends on the bound Tidal account.</p>
+                  <button type="button" data-quality="max" role="option">
+                    <strong data-i18n="qualityMax">Max</strong>
+                    <small data-i18n="qualityMaxDetail">Up to 24-bit, 192 kHz</small>
+                  </button>
+                  <button type="button" data-quality="high" role="option">
+                    <strong data-i18n="qualityHigh">High</strong>
+                    <small data-i18n="qualityHighDetail">16-bit, 44.1 kHz</small>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="button-row">
@@ -101,15 +118,15 @@
           <div class="output-head">
             <div>
               <p class="section-kicker" data-i18n="queue">Queue</p>
-              <h2 data-i18n="sessionEvents">Session events</h2>
+              <h2 data-i18n="sessionEvents">Queue status</h2>
             </div>
             <div class="output-actions">
               <button id="pauseRun" type="button" class="secondary-button hidden" data-i18n="pauseRun">Pause</button>
               <button id="resumeRun" type="button" class="secondary-button hidden" data-i18n="resumeRun">Resume</button>
               <button id="cancelRun" type="button" class="secondary-button hidden" data-i18n="cancelRun">Cancel</button>
+              <button id="clearQueue" type="button" class="secondary-button" data-i18n="clearQueue">Clear</button>
               <a id="exportLog" class="secondary-link hidden" href="#" target="_blank" rel="noreferrer" data-i18n="exportLog">Export log</a>
               <button id="openFolder" type="button" class="secondary-button hidden" data-i18n="openFolder">Open folder</button>
-              <span id="jobStatus" class="status-light" data-i18n="idle">Idle</span>
             </div>
           </div>
           <div id="queueTable" class="queue-table"></div>

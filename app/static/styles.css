@@ -517,6 +517,82 @@ select {
   flex-wrap: wrap;
 }
 
+.quality-select {
+  position: relative;
+}
+
+.quality-button {
+  min-width: 92px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.quality-arrow {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid currentColor;
+  opacity: 0.72;
+}
+
+.quality-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 230px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28);
+}
+
+.quality-note {
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.quality-menu button {
+  display: grid;
+  width: 100%;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quality-menu button:last-child {
+  border-bottom: 0;
+}
+
+.quality-menu button:hover,
+.quality-menu button[aria-selected="true"] {
+  background: rgba(70, 216, 161, 0.12);
+}
+
+.quality-menu small {
+  color: var(--muted);
+}
+
 .output-head {
   display: flex;
   justify-content: space-between;
@@ -603,8 +679,9 @@ select {
 
 .queue-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) 100px minmax(120px, 0.8fr) 74px;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1.55fr) minmax(110px, 128px) minmax(150px, 0.7fr);
+  column-gap: 24px;
+  row-gap: 8px;
   align-items: center;
   border: 1px solid var(--line);
   background: var(--panel-2);
@@ -623,9 +700,21 @@ select {
   display: block;
 }
 
+.queue-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.queue-progress {
+  align-self: center;
+}
+
 .progress {
   display: block;
   height: 8px;
+  width: 112px;
   background: #0e1210;
   border: 1px solid var(--line);
   overflow: hidden;
@@ -640,6 +729,31 @@ select {
 .mini-button {
   min-height: 32px;
   padding: 0 9px;
+}
+
+.icon-mini-button {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: #101713;
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.icon-mini-button img {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.icon-mini-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 @media (max-width: 860px) {

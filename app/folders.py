@@ -12,9 +12,23 @@ def open_folder_command(path: Path, system: str | None = None) -> list[str]:
     return ["xdg-open", str(path)]
 
 
+def reveal_file_command(path: Path, system: str | None = None) -> list[str]:
+    system = system or platform.system()
+    if system == "Darwin":
+        return ["open", "-R", str(path)]
+    if system == "Windows":
+        windows_path = str(path).replace("/", "\\")
+        return ["explorer", f"/select,{windows_path}"]
+    return ["xdg-open", str(path.parent)]
+
+
 def open_folder(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
     subprocess.Popen(open_folder_command(path))
+
+
+def reveal_file(path: Path) -> None:
+    subprocess.Popen(reveal_file_command(path))
 
 
 def pick_folder(initial: Path) -> Path | None:

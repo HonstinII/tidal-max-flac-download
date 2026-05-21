@@ -1,6 +1,6 @@
 # Tidal Max FLAC Studio
 
-A local desktop/web app for binding a Tidal account and downloading Tidal track or album URLs as Max/Hi-Res FLAC files with embedded cover art and lyrics.
+A local desktop/web app for binding a Tidal account and downloading Tidal track or album URLs as Max/Hi-Res FLAC files, with High/AAC fallback when Tidal only exposes AAC, embedded cover art, lyrics, and queue controls.
 
 This app is designed for personal offline listening. It does not ask for or store your Tidal password. Binding happens through Tidal's official device authorization page.
 
@@ -8,7 +8,7 @@ This app is designed for personal offline listening. It does not ask for or stor
 
 The core downloader foundation is [streamrip](https://github.com/nathom/streamrip), created by [nathom](https://github.com/nathom).
 
-This project is a local studio wrapper around that foundation. The work here is to integrate the one-click local setup flow, Tidal binding, Max FLAC download workflow, cover embedding, lyrics tagging, output folder controls, bilingual UI, and a desktop/web interface for the whole toolchain.
+This project is a local studio wrapper around that foundation. The work here is to integrate the one-click local setup flow, Tidal binding, Max/High download workflow, AAC fallback handling, cover embedding, lyrics tagging, output folder controls, bilingual UI, and a desktop/web interface for the whole toolchain.
 
 In short: `streamrip` is the core. Tidal Max FLAC Studio is the UI and workflow layer around it.
 
@@ -150,9 +150,9 @@ Output defaults to:
 ~/Music/Streamrip/Tidal-Max-FLAC
 ```
 
-The app requests Tidal `HI_RES` playback and requires a FLAC DASH representation. It does not silently save AAC when FLAC is unavailable.
+The quality menu defaults to **Max**, which requests Tidal `HI_RES` and falls back to `LOSSLESS` FLAC when needed. **High** first requests `LOSSLESS`; if Tidal only exposes AAC for that track, the app asks for confirmation before downloading an `.m4a` file. AAC fallback files also receive cover art, lyrics, and basic MP4 metadata when available.
 
-The download workspace can open the output folder picker and open the selected folder in Finder. It can embed Tidal cover art into the FLAC file and write available Tidal lyrics into the FLAC `LYRICS` tag. Cover embedding uses `metaflac`; if it is missing, the app prompts only when **Embed cover art** is enabled.
+The download workspace can preview track/album URLs, keep completed tracks in the queue, retry failed or skipped items in place, clear the visible queue, open the output folder, and reveal a completed file in Finder or Windows Explorer. It can embed Tidal cover art into FLAC or M4A files and write available Tidal lyrics into the audio tags. FLAC cover embedding uses `metaflac`; if it is missing, the app prompts only when **Embed cover art** is enabled.
 
 ## Troubleshooting
 
@@ -171,7 +171,7 @@ If cover embedding is missing on Windows, use the dialog shown by **Embed cover 
 https://xiph.org/flac/download.html
 ```
 
-If a track fails with "No FLAC representation", your account, region, or that specific Tidal release may not expose a FLAC Max stream.
+If a track's High quality is unavailable but Max works, switch the quality selector to **Max**. If Tidal only exposes AAC for High, the app will ask whether to continue with AAC.
 
 ## Safety
 

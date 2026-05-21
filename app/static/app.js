@@ -10,6 +10,8 @@ const state = {
   activeRunId: null,
   previewTimer: null,
   previewAbort: null,
+  audioQuality: localStorage.getItem("audioQuality") || "max",
+  queueCleared: false,
 };
 
 const els = {
@@ -35,10 +37,14 @@ const els = {
   pauseRun: document.querySelector("#pauseRun"),
   resumeRun: document.querySelector("#resumeRun"),
   cancelRun: document.querySelector("#cancelRun"),
+  clearQueue: document.querySelector("#clearQueue"),
   exportLog: document.querySelector("#exportLog"),
   concurrency: document.querySelector("#concurrency"),
   embedCovers: document.querySelector("#embedCovers"),
   embedLyrics: document.querySelector("#embedLyrics"),
+  audioQualityLabel: document.querySelector("#audioQualityLabel"),
+  audioQualityButton: document.querySelector("#audioQualityButton"),
+  audioQualityMenu: document.querySelector("#audioQualityMenu"),
   lyricsMode: document.querySelector("#lyricsMode"),
   writeLrc: document.querySelector("#writeLrc"),
   albumTemplate: document.querySelector("#albumTemplate"),
@@ -115,6 +121,11 @@ const copy = {
     concurrencyHelp: "Controls how many audio segments download at the same time. Higher values can speed up fast networks, but may increase CPU, memory, disk activity, and the chance of network throttling or unstable downloads.",
     embedCover: "Embed cover art",
     embedLyrics: "Embed lyrics",
+    qualityAccountNote: "Maximum quality depends on the bound Tidal account.",
+    qualityMax: "Max",
+    qualityMaxDetail: "Up to 24-bit, 192 kHz",
+    qualityHigh: "High",
+    qualityHighDetail: "16-bit, 44.1 kHz",
     lyricsMode: "Lyrics mode",
     lyricsAuto: "Auto",
     lyricsSynced: "Synced",
@@ -130,14 +141,19 @@ const copy = {
     strategySkip: "Skip",
     strategyOverwrite: "Overwrite",
     strategyKeepBoth: "Keep both",
+    lossyConfirm: "Due to Tidal's official restrictions, this song's HIGH format can only be downloaded as AAC. Continue?",
+    lossyAvailableDetail: "Tidal only exposed an AAC stream for this track/account at High quality. Continue with AAC to download an .m4a file.",
+    existingFileSkipped: "This folder already has this song. Choose another output folder or change the download setting.",
+    openFileLocation: "Open file location",
     previewParsing: "Parsing preview...",
     previewFailed: "Parse failed. Please paste a complete Tidal link.",
     startDownload: "Start download",
     queue: "Queue",
-    sessionEvents: "Session events",
+    sessionEvents: "Queue status",
     pauseRun: "Pause",
     resumeRun: "Resume",
     cancelRun: "Cancel",
+    clearQueue: "Clear",
     exportLog: "Export log",
     retry: "Retry",
     previewEmpty: "Preview is empty.",
@@ -214,6 +230,11 @@ const copy = {
     concurrencyHelp: "控制同时下载多少个音频分段。数值越大，在网络足够快时可能更快，但也会增加 CPU、内存、磁盘占用，并提高被网络限速或下载不稳定的概率。",
     embedCover: "嵌入封面",
     embedLyrics: "嵌入歌词",
+    qualityAccountNote: "最高下载品质由当前绑定的 Tidal 账号决定。",
+    qualityMax: "Max",
+    qualityMaxDetail: "最高 24-bit, 192 kHz",
+    qualityHigh: "High",
+    qualityHighDetail: "16-bit, 44.1 kHz",
     lyricsMode: "歌词模式",
     lyricsAuto: "自动",
     lyricsSynced: "同步歌词",
@@ -229,14 +250,19 @@ const copy = {
     strategySkip: "跳过",
     strategyOverwrite: "覆盖",
     strategyKeepBoth: "保留两个",
+    lossyConfirm: "受 Tidal 官方限制，此歌曲 HIGH格式 只能以 AAC 格式下载，是否继续？",
+    lossyAvailableDetail: "当前歌曲/账号在 High 品质下只返回 AAC 流。继续后会下载 .m4a 文件。",
+    existingFileSkipped: "该目录已存在该歌曲，请选择其他目录下载或更改下载设置。",
+    openFileLocation: "打开文件位置",
     previewParsing: "解析中...",
     previewFailed: "解析失败，请放入完整的tidal的链接",
     startDownload: "开始下载",
     queue: "队列",
-    sessionEvents: "会话事件",
+    sessionEvents: "队列状态",
     pauseRun: "暂停",
     resumeRun: "继续",
     cancelRun: "取消",
+    clearQueue: "清空",
     exportLog: "导出日志",
     retry: "重试",
     previewEmpty: "没有预览内容。",
@@ -287,10 +313,30 @@ function applyLanguage() {
   });
   els.langEn.classList.toggle("active", state.language === "en");
   els.langZh.classList.toggle("active", state.language === "zh");
+  if (els.audioQualityButton) {
+    els.audioQualityLabel.textContent = t(state.audioQuality === "high" ? "qualityHigh" : "qualityMax");
+  }
   if (state.setup) {
     renderChecks();
     renderMode();
   }
+}
+
+function setAudioQuality(value) {
+  state.audioQuality = value === "high" ? "high" : "max";
+  localStorage.setItem("audioQuality", state.audioQuality);
+  els.audioQualityLabel.textContent = t(state.audioQuality === "high" ? "qualityHigh" : "qualityMax");
+  els.audioQualityButton.setAttribute("aria-expanded", "false");
+  els.audioQualityMenu.classList.add("hidden");
+  els.audioQualityMenu.querySelectorAll("[data-quality]").forEach((button) => {
+    button.setAttribute("aria-selected", String(button.dataset.quality === state.audioQuality));
+  });
+}
+
+function toggleAudioQualityMenu() {
+  const isOpen = !els.audioQualityMenu.classList.contains("hidden");
+  els.audioQualityMenu.classList.toggle("hidden", isOpen);
+  els.audioQualityButton.setAttribute("aria-expanded", String(!isOpen));
 }
 
 function checkRow({ label, ok, detail, description, required, path, missingText }) {
@@ -448,35 +494,25 @@ function addEvent(event) {
   if (!display) return;
   const row = document.createElement("div");
   row.className = "event";
+  if (event.item_id) row.dataset.itemId = event.item_id;
   const title = display.title ? ` ${display.title}` : "";
   row.innerHTML = `<strong>${display.label}</strong>${title}<br>${display.detail || ""}`;
   els.events.prepend(row);
 }
 
 function toDisplayEvent(event) {
-  if (event.stage === "fetching" || event.stage === "resolving") {
-    return { label: t("fetching"), detail: event.url };
-  }
-  if (event.stage === "fetched") {
-    return { label: t("fetched"), detail: `${event.count || 0} ${t("tracks")}` };
-  }
-  if (event.stage === "downloading") {
-    return {
-      label: t("downloading"),
-      title: `${event.artist || ""} - ${event.title || event.track_id || ""}`.trim(),
-    };
-  }
-  if (event.stage === "downloaded" || event.stage === "skipped") {
-    return {
-      label: t("complete"),
-      title: `${event.artist || ""} - ${event.title || event.track_id || ""}`.trim(),
-      detail: event.path,
-    };
+  if (event.stage === "lossy_available") {
+    return null;
   }
   if (event.stage === "error" || event.stage === "failed") {
     return { label: t("failed"), detail: event.message || event.url };
   }
   return null;
+}
+
+function clearItemEvents(itemId) {
+  if (!itemId) return;
+  els.events.querySelectorAll(`[data-item-id="${CSS.escape(itemId)}"]`).forEach((node) => node.remove());
 }
 
 function readUrls() {
@@ -587,6 +623,8 @@ function queuePayload(urls) {
     urls,
     output_dir: els.outputDir.value,
     concurrency: Number(els.concurrency.value || 10),
+    audio_quality: state.audioQuality,
+    allow_lossy_audio: false,
     embed_covers: els.embedCovers.checked,
     embed_lyrics: els.embedLyrics.checked,
     write_lrc: els.writeLrc.checked,
@@ -610,6 +648,7 @@ async function startDownload() {
     return;
   }
   els.downloadButton.disabled = true;
+  state.queueCleared = false;
   els.openFolder.classList.add("hidden");
   els.events.innerHTML = "";
   const response = await fetch("/api/queue", {
@@ -619,15 +658,35 @@ async function startDownload() {
   });
   const data = await response.json();
   state.activeRunId = data.run.id;
-  els.jobStatus.textContent = `Run ${state.activeRunId.slice(0, 8)}`;
+  if (els.jobStatus) els.jobStatus.textContent = `Run ${state.activeRunId.slice(0, 8)}`;
   updateRunControls("running");
   state.lastOutputDir = els.outputDir.value;
-  if (state.eventSource) state.eventSource.close();
   await fetch(`/api/queue/runs/${state.activeRunId}/start`, { method: "POST" });
   await refreshQueue();
-  state.eventSource = new EventSource(`/api/queue/runs/${state.activeRunId}/events`);
+  listenToRunEvents(state.activeRunId);
+}
+
+function listenToRunEvents(runId) {
+  if (state.eventSource) state.eventSource.close();
+  state.eventSource = new EventSource(`/api/queue/runs/${runId}/events`);
   state.eventSource.onmessage = (message) => {
     const event = JSON.parse(message.data);
+    if (event.stage === "lossy_available" && event.item_id) {
+      els.downloadButton.disabled = false;
+      updateRunControls("failed");
+      state.eventSource.close();
+      if (confirm(t("lossyConfirm"))) {
+        retryQueueItem(event.item_id, { allowLossyAudio: true });
+      }
+      return;
+    }
+    if (event.stage === "downloaded") {
+      clearItemEvents(event.item_id);
+    }
+    if (event.stage === "skipped") {
+      clearItemEvents(event.item_id);
+      showToast(t("existingFileSkipped"), "error", 6000);
+    }
     addEvent(event);
     refreshQueue();
     if (event.stage === "complete" || event.stage === "failed") {
@@ -647,9 +706,31 @@ async function startDownload() {
 }
 
 async function refreshQueue() {
+  if (state.queueCleared) return;
   const response = await fetch("/api/queue");
   const data = await response.json();
-  renderQueue(data.items || []);
+  let items = data.items || [];
+  if (!state.activeRunId && items.length) {
+    state.activeRunId = items[items.length - 1].run_id;
+    if (els.jobStatus) els.jobStatus.textContent = `Run ${state.activeRunId.slice(0, 8)}`;
+  }
+  if (state.activeRunId) {
+    items = items.filter((item) => item.run_id === state.activeRunId);
+  }
+  renderQueue(items);
+}
+
+function clearQueueView() {
+  if (state.eventSource) {
+    state.eventSource.close();
+    state.eventSource = null;
+  }
+  state.activeRunId = null;
+  state.queueCleared = true;
+  els.queueTable.innerHTML = "";
+  els.events.innerHTML = "";
+  els.openFolder.classList.add("hidden");
+  updateRunControls("");
 }
 
 function renderQueue(items) {
@@ -659,7 +740,7 @@ function renderQueue(items) {
   }
   els.queueTable.innerHTML = `
     <div class="queue-row queue-head">
-      <span>Track</span><span>Status</span><span>Progress</span><span></span>
+      <span>Track</span><span>Progress</span><span>Status</span>
     </div>
     ${items.map(renderQueueRow).join("")}
   `;
@@ -668,16 +749,29 @@ function renderQueue(items) {
 function renderQueueRow(item) {
   const total = Number(item.progress_total || 0);
   const current = Number(item.progress_current || 0);
-  const percent = total ? Math.round((current / total) * 100) : 0;
+  const segmentPercent = total ? Math.round((current / total) * 100) : 0;
+  const complete = ["complete", "skipped"].includes(item.status);
+  const percent = complete ? 100 : segmentPercent;
+  const progressLabel = `${percent}%`;
   const retry = item.status === "failed" ? `<button type="button" class="secondary-button mini-button" data-retry="${item.id}">${t("retry")}</button>` : "";
+  const reveal = item.status === "complete" && item.output_path
+    ? `<button type="button" class="icon-mini-button" data-reveal-file="${escapeHtml(item.output_path)}" title="${t("openFileLocation")}" aria-label="${t("openFileLocation")}"><img src="/static/folder-open-fill.png" alt=""></button>`
+    : "";
   return `
     <div class="queue-row">
       <span><strong>${item.artist || ""} - ${item.title || item.track_id || ""}</strong><small>${item.album_title || ""}</small></span>
-      <span>${item.status}</span>
-      <span><span class="progress"><i style="width:${percent}%"></i></span><small>${current}/${total || "-"}</small></span>
-      <span>${retry}</span>
+      <span class="queue-progress"><span class="progress"><i style="width:${percent}%"></i></span><small>${progressLabel}</small></span>
+      <span class="queue-status">${item.status}${retry}${reveal}</span>
     </div>
   `;
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 function updateRunControls(status) {
@@ -691,8 +785,20 @@ function updateRunControls(status) {
   }
 }
 
-async function retryQueueItem(itemId) {
-  await fetch(`/api/queue/items/${itemId}/retry`, { method: "POST" });
+async function retryQueueItem(itemId, options = {}) {
+  clearItemEvents(itemId);
+  const response = await fetch(`/api/queue/items/${itemId}/retry`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ allow_lossy_audio: Boolean(options.allowLossyAudio) }),
+  });
+  const data = await response.json();
+  if (data.run?.id) {
+    state.activeRunId = data.run.id;
+    if (els.jobStatus) els.jobStatus.textContent = `Run ${state.activeRunId.slice(0, 8)}`;
+    updateRunControls("running");
+    listenToRunEvents(state.activeRunId);
+  }
   await refreshQueue();
 }
 
@@ -847,15 +953,23 @@ els.urlInput.addEventListener("paste", () => setTimeout(scheduleAutoPreview, 0))
 els.downloadButton.addEventListener("click", startDownload);
 els.settingsButton.addEventListener("click", showSettingsModal);
 els.closeSettingsButton.addEventListener("click", hideSettingsModal);
+els.audioQualityButton.addEventListener("click", toggleAudioQualityMenu);
+els.audioQualityMenu.addEventListener("click", (event) => {
+  const option = event.target.closest("[data-quality]");
+  if (option) setAudioQuality(option.dataset.quality);
+});
 els.settingsModal.addEventListener("click", (event) => {
   if (event.target === els.settingsModal) hideSettingsModal();
 });
 els.pauseRun.addEventListener("click", pauseRun);
 els.resumeRun.addEventListener("click", resumeRun);
 els.cancelRun.addEventListener("click", cancelRun);
+els.clearQueue.addEventListener("click", clearQueueView);
 els.queueTable.addEventListener("click", (event) => {
   const button = event.target.closest("[data-retry]");
   if (button) retryQueueItem(button.dataset.retry);
+  const revealButton = event.target.closest("[data-reveal-file]");
+  if (revealButton) revealFile(revealButton.dataset.revealFile);
 });
 els.installToolsButton.addEventListener("click", installMissingTools);
 els.installCoverToolButton.addEventListener("click", useBundledFlac);
@@ -876,9 +990,17 @@ document.addEventListener("click", (event) => {
   if (!els.workspaceAccountButton.contains(event.target) && !els.accountDropdown.contains(event.target)) {
     closeAccountMenu();
   }
+  if (!els.audioQualityButton.contains(event.target) && !els.audioQualityMenu.contains(event.target)) {
+    els.audioQualityMenu.classList.add("hidden");
+    els.audioQualityButton.setAttribute("aria-expanded", "false");
+  }
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") closeAccountMenu();
+  if (event.key === "Escape") {
+    closeAccountMenu();
+    els.audioQualityMenu.classList.add("hidden");
+    els.audioQualityButton.setAttribute("aria-expanded", "false");
+  }
 });
 els.langEn.addEventListener("click", () => {
   state.language = "en";
@@ -906,8 +1028,17 @@ els.openFolder.addEventListener("click", async () => {
     body: JSON.stringify({ path: els.outputDir.value }),
   });
 });
+
+async function revealFile(path) {
+  await fetch("/api/folders/reveal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path }),
+  });
+}
 refreshSetup().catch((error) => {
   els.bindMessage.textContent = `Startup failed: ${error.message}`;
 });
 refreshQueue().catch(() => {});
 applyLanguage();
+setAudioQuality(state.audioQuality);

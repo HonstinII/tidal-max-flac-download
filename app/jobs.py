@@ -7,11 +7,13 @@ from pathlib import Path
 from queue import Queue
 from typing import Callable, Iterable
 
+import requests
+
 from .config import default_config
-from .covers import embed_cover
-from .downloader import DownloadOptions, download_track_as_flac, parse_flac_dash_manifest
-from .lyrics import embed_lyrics, extract_lyrics_text, write_lrc
-from .metadata import has_cover, repair_flac_tags
+from .covers import embed_cover, embed_mp4_cover
+from .downloader import DownloadOptions, LossyAudioAvailable, download_track_as_flac, parse_flac_dash_manifest
+from .lyrics import embed_lyrics, embed_mp4_lyrics, extract_lyrics_text, write_lrc
+from .metadata import has_cover, repair_flac_tags, repair_mp4_tags
 from .storage import AppDatabase
 from .tidal_api import TidalApi, TrackItem, parse_tidal_url
 from .tidal_config import read_tidal_auth
@@ -23,6 +25,8 @@ class JobOptions:
     concurrency: int = 10
     embed_covers: bool = True
     embed_lyrics: bool = True
+    audio_quality: str = "max"
+    allow_lossy_audio: bool = False
     write_lrc: bool = False
     lyrics_mode: str = "auto"
     skip_existing: bool = True
@@ -142,6 +146,8 @@ class DownloadJobManager:
                 "concurrency": options.concurrency,
                 "embed_covers": options.embed_covers,
                 "embed_lyrics": options.embed_lyrics,
+                "audio_quality": options.audio_quality,
+                "allow_lossy_audio": options.allow_lossy_audio,
                 "write_lrc": options.write_lrc,
                 "lyrics_mode": options.lyrics_mode,
                 "skip_existing": options.skip_existing,
@@ -186,10 +192,12 @@ class DownloadJobManager:
             try:
                 self._process_item(run, item, api, headers)
             except Exception as error:
-                self.database.update_queue_item(item["id"], status="failed", error=str(error))
+                message = _display_error_message(error)
+                self.database.update_queue_item(item["id"], status="failed", error=message)
+                stage = "lossy_available" if isinstance(error, LossyAudioAvailable) else "error"
                 self.emit_run(
                     run_id,
-                    {"stage": "error", "item_id": item["id"], "track_id": item.get("track_id"), "message": str(error)},
+                    {"stage": stage, "item_id": item["id"], "track_id": item.get("track_id"), "message": message},
                 )
         final_status = "complete"
         self.database.update_run(run_id, status=final_status, completed_at=time.time())
@@ -214,15 +222,12 @@ class DownloadJobManager:
                     lyrics = api.get_lyrics(track.track_id)
             except Exception as error:
                 self.emit_run(run_id, {"stage": "lyrics_unavailable", "item_id": item["id"], "message": str(error)})
-        playback = api.get(
-            f"tracks/{track.track_id}/playbackinfopostpaywall",
-            {
-                "audioquality": "HI_RES",
-                "playbackmode": "STREAM",
-                "assetpresentation": "FULL",
-            },
+        manifest = self._playback_manifest(
+            api,
+            track.track_id,
+            options.get("audio_quality", "max"),
+            allow_lossy_audio=bool(options.get("allow_lossy_audio", False)),
         )
-        manifest = parse_flac_dash_manifest(playback["manifest"])
 
         def emit_download(event: dict) -> None:
             if event.get("stage") == "segment":
@@ -255,13 +260,16 @@ class DownloadJobManager:
                 album_template=options.get("album_template") or "{album_artist}/{album} ({year})",
                 filename_template=options.get("filename_template") or "{track_number}. {artist} - {title}",
                 single_filename_template=options.get("single_filename_template") or "{artist} - {title}",
+                allow_lossy_audio=bool(options.get("allow_lossy_audio", False)),
             ),
             headers,
             emit_download,
         )
         status = "skipped" if result.status == "skipped" else "postprocessing"
         self.database.update_queue_item(item["id"], status=status, output_path=str(result.output_path))
-        if options.get("embed_covers", True) and result.status != "skipped":
+        is_flac_output = result.output_path.suffix.lower() == ".flac"
+        is_mp4_output = result.output_path.suffix.lower() in {".m4a", ".mp4"}
+        if is_flac_output and options.get("embed_covers", True) and result.status != "skipped":
             self._warn_if_fails(
                 run_id,
                 item["id"],
@@ -271,14 +279,27 @@ class DownloadJobManager:
                 else True,
             )
             self.emit_run(run_id, {"stage": "cover", "item_id": item["id"], "track_id": track.track_id})
-        if options.get("embed_lyrics", True) and lyrics and result.status != "skipped":
+        if is_flac_output and options.get("embed_lyrics", True) and lyrics and result.status != "skipped":
             if self._warn_if_fails(run_id, item["id"], "lyrics", lambda: embed_lyrics(result.output_path, lyrics)):
+                self.emit_run(run_id, {"stage": "lyrics", "item_id": item["id"], "track_id": track.track_id})
+        if is_mp4_output and options.get("embed_covers", True) and result.status != "skipped":
+            if self._warn_if_fails(
+                run_id,
+                item["id"],
+                "cover",
+                lambda: embed_mp4_cover(result.output_path, track.cover_id, Path(run["output_dir"]) / ".covers"),
+            ):
+                self.emit_run(run_id, {"stage": "cover", "item_id": item["id"], "track_id": track.track_id})
+        if is_mp4_output and options.get("embed_lyrics", True) and lyrics and result.status != "skipped":
+            if self._warn_if_fails(run_id, item["id"], "lyrics", lambda: embed_mp4_lyrics(result.output_path, lyrics)):
                 self.emit_run(run_id, {"stage": "lyrics", "item_id": item["id"], "track_id": track.track_id})
         if options.get("write_lrc", False) and lyrics and result.status != "skipped":
             if self._warn_if_fails(run_id, item["id"], "lrc", lambda: write_lrc(result.output_path, lyrics)):
                 self.emit_run(run_id, {"stage": "lrc", "item_id": item["id"], "track_id": track.track_id})
-        if result.status != "skipped":
+        if is_flac_output and result.status != "skipped":
             self._warn_if_fails(run_id, item["id"], "metadata", lambda: repair_flac_tags(result.output_path, track))
+        if is_mp4_output and result.status != "skipped":
+            self._warn_if_fails(run_id, item["id"], "metadata", lambda: repair_mp4_tags(result.output_path, track))
         final_status = "skipped" if result.status == "skipped" else "complete"
         self.database.update_queue_item(
             item["id"],
@@ -304,6 +325,43 @@ class DownloadJobManager:
             self.emit_run(run_id, {"stage": "warning", "item_id": item_id, "kind": stage, "message": str(error)})
             return False
 
+    def _playback_manifest(self, api: TidalApi, track_id: str, audio_quality: str, allow_lossy_audio: bool = False):
+        qualities = ["LOSSLESS", "HIGH"] if audio_quality == "high" else ["HI_RES", "LOSSLESS"]
+        errors = []
+        lossy_error = None
+        unauthorized_qualities = []
+        for quality in qualities:
+            try:
+                playback = api.get(
+                    f"tracks/{track_id}/playbackinfopostpaywall",
+                    {
+                        "audioquality": quality,
+                        "playbackmode": "STREAM",
+                        "assetpresentation": "FULL",
+                    },
+                )
+                if allow_lossy_audio:
+                    return parse_flac_dash_manifest(playback["manifest"], allow_lossy_audio=True)
+                return parse_flac_dash_manifest(playback["manifest"])
+            except LossyAudioAvailable as error:
+                lossy_error = error
+                errors.append(f"{quality}: {error}")
+            except requests.HTTPError as error:
+                if getattr(error.response, "status_code", None) == 401 and quality != qualities[-1]:
+                    unauthorized_qualities.append(quality)
+                    errors.append(f"{quality}: unavailable")
+                    continue
+                if getattr(error.response, "status_code", None) == 401:
+                    unauthorized_qualities.append(quality)
+                errors.append(f"{quality}: {error}")
+            except Exception as error:
+                errors.append(f"{quality}: {error}")
+        if lossy_error:
+            raise LossyAudioAvailable(str(lossy_error))
+        if audio_quality == "high" and len(unauthorized_qualities) == len(qualities):
+            raise RuntimeError("当前歌曲的 High 品质不可用，请切换 Max 下载。")
+        raise RuntimeError("No FLAC playback manifest available. " + " | ".join(errors))
+
     def pause_run(self, run_id: str) -> dict | None:
         run = self.database.update_run(run_id, status="paused")
         self.emit_run(run_id, {"stage": "paused"})
@@ -327,8 +385,28 @@ class DownloadJobManager:
             run = self.database.get_run(item["run_id"])
             if run and run["status"] in {"complete", "failed", "paused"}:
                 self.database.update_run(item["run_id"], status="queued", completed_at=None)
+            self._reset_run_stream(item["run_id"])
             self.emit_run(item["run_id"], {"stage": "retried", "item_id": item_id})
+            self.start_run(item["run_id"])
         return item
+
+    def retry_item_with_options(self, item_id: str, **option_updates) -> dict | None:
+        item = self.database.retry_queue_item(item_id)
+        if item:
+            run = self.database.get_run(item["run_id"])
+            if run:
+                options = dict(run.get("options") or {})
+                options.update(option_updates)
+                self.database.update_run(item["run_id"], status="queued", completed_at=None, options=options)
+            self._reset_run_stream(item["run_id"])
+            self.emit_run(item["run_id"], {"stage": "retried", "item_id": item_id})
+            self.start_run(item["run_id"])
+        return item
+
+    def _reset_run_stream(self, run_id: str) -> None:
+        with self.lock:
+            self.run_events[run_id] = []
+            self.run_queues[run_id] = Queue()
 
 
 def track_to_dict(track: TrackItem) -> dict:
@@ -363,6 +441,14 @@ def track_from_item(item: dict) -> TrackItem:
         disc_number=item.get("disc_number"),
         total_discs=item.get("total_discs"),
     )
+
+
+def _display_error_message(error: Exception) -> str:
+    status_code = getattr(getattr(error, "response", None), "status_code", None)
+    raw = str(error)
+    if status_code == 401 or ("401" in raw and "Unauthorized" in raw):
+        return "402, Tidal 授权已失效，请重新绑定账号。"
+    return raw
 
 
 def _sse(event: dict) -> str:

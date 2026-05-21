@@ -45,6 +45,27 @@ def test_repair_flac_tags_rewrites_core_metadata(monkeypatch, tmp_path):
     assert audio["saved"] == ["yes"]
 
 
+def test_repair_mp4_tags_rewrites_core_metadata(monkeypatch, tmp_path):
+    from app import metadata
+
+    class FakeAudio(dict):
+        def save(self):
+            self["saved"] = ["yes"]
+
+    audio = FakeAudio()
+    monkeypatch.setattr(metadata, "MP4", lambda path: audio)
+
+    assert metadata.repair_mp4_tags(tmp_path / "song.m4a", track()) is True
+    assert audio["\xa9nam"] == ["Song"]
+    assert audio["\xa9ART"] == ["Artist"]
+    assert audio["\xa9alb"] == ["Album"]
+    assert audio["aART"] == ["Album Artist"]
+    assert audio["\xa9day"] == ["2026"]
+    assert audio["trkn"] == [(7, 12)]
+    assert audio["disk"] == [(1, 1)]
+    assert audio["saved"] == ["yes"]
+
+
 def test_has_cover_reads_flac_picture_blocks(monkeypatch, tmp_path):
     from app import metadata
 

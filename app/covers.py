@@ -1,6 +1,7 @@
 from pathlib import Path
 import subprocess
 
+from mutagen.mp4 import MP4, MP4Cover
 import requests
 
 
@@ -40,4 +41,16 @@ def embed_cover(flac_path: Path, cover_id: str | None, cache_dir: Path) -> bool:
         check=True,
     )
     subprocess.run(build_metaflac_command(flac_path, image_path), check=True)
+    return True
+
+
+def embed_mp4_cover(mp4_path: Path, cover_id: str | None, cache_dir: Path) -> bool:
+    if not cover_id:
+        return False
+    image_path = download_cover(cover_id, cache_dir)
+    audio = MP4(str(mp4_path))
+    audio["covr"] = [
+        MP4Cover(image_path.read_bytes(), imageformat=MP4Cover.FORMAT_JPEG)
+    ]
+    audio.save()
     return True

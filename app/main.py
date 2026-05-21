@@ -13,7 +13,7 @@ from .config import default_config
 from .tidal_auth import TidalAuthManager
 from .tidal_config import clear_tidal_auth, write_tidal_auth
 from .jobs import DownloadJobManager, JobOptions
-from .folders import open_folder, pick_folder
+from .folders import open_folder, pick_folder, reveal_file
 from .installer import InstallJobManager, extract_bundled_flac
 from .storage import AppDatabase
 from .tidal_api import TidalApi, TrackItem, parse_tidal_url
@@ -37,6 +37,8 @@ class JobRequest(BaseModel):
     concurrency: int = 10
     embed_covers: bool = True
     embed_lyrics: bool = True
+    audio_quality: str = "max"
+    allow_lossy_audio: bool = False
     write_lrc: bool = False
     lyrics_mode: str = "auto"
     skip_existing: bool = True
@@ -52,6 +54,8 @@ class QueueRequest(BaseModel):
     concurrency: int = 10
     embed_covers: bool = True
     embed_lyrics: bool = True
+    audio_quality: str = "max"
+    allow_lossy_audio: bool = False
     write_lrc: bool = False
     lyrics_mode: str = "auto"
     skip_existing: bool = True
@@ -63,6 +67,10 @@ class QueueRequest(BaseModel):
 
 class FolderRequest(BaseModel):
     path: str | None = None
+
+
+class RetryRequest(BaseModel):
+    allow_lossy_audio: bool = False
 
 
 @app.get("/")
@@ -135,6 +143,8 @@ def create_queue(request: QueueRequest):
         "concurrency": request.concurrency,
         "embed_covers": request.embed_covers,
         "embed_lyrics": request.embed_lyrics,
+        "audio_quality": request.audio_quality,
+        "allow_lossy_audio": request.allow_lossy_audio,
         "write_lrc": request.write_lrc,
         "lyrics_mode": request.lyrics_mode,
         "existing_strategy": request.existing_strategy,
@@ -182,9 +192,13 @@ def get_queue_events(run_id: str):
 
 
 @app.post("/api/queue/items/{item_id}/retry")
-def retry_queue_item(item_id: str):
-    item = job_manager.retry_item(item_id)
-    return {"item": item}
+def retry_queue_item(item_id: str, request: RetryRequest | None = None):
+    if request and request.allow_lossy_audio:
+        item = job_manager.retry_item_with_options(item_id, allow_lossy_audio=True)
+    else:
+        item = job_manager.retry_item(item_id)
+    run = database.get_run(item["run_id"]) if item else None
+    return {"item": item, "run": run}
 
 
 @app.post("/api/queue/runs/{run_id}/pause")
@@ -303,6 +317,8 @@ def create_job(request: JobRequest):
         concurrency=request.concurrency,
         embed_covers=request.embed_covers,
         embed_lyrics=request.embed_lyrics,
+        audio_quality=request.audio_quality,
+        allow_lossy_audio=request.allow_lossy_audio,
         write_lrc=request.write_lrc,
         lyrics_mode=request.lyrics_mode,
         skip_existing=request.skip_existing,
@@ -342,4 +358,13 @@ def pick_output_folder(request: FolderRequest):
 def open_output_folder(request: FolderRequest):
     path = Path(request.path).expanduser() if request.path else default_config().output_dir
     open_folder(path)
+    return {"ok": True, "path": str(path)}
+
+
+@app.post("/api/folders/reveal")
+def reveal_output_file(request: FolderRequest):
+    if not request.path:
+        return {"ok": False}
+    path = Path(request.path).expanduser()
+    reveal_file(path)
     return {"ok": True, "path": str(path)}

@@ -1,4 +1,5 @@
 import base64
+import json
 
 from pathlib import Path
 
@@ -6,6 +7,7 @@ import pytest
 
 from app.downloader import (
     DownloadOptions,
+    LossyAudioAvailable,
     NoFlacRepresentation,
     build_output_path,
     prepare_output_path,
@@ -34,6 +36,15 @@ def encoded_mpd(codec="flac"):
     return base64.b64encode(xml.encode("utf-8")).decode("ascii")
 
 
+def encoded_json_manifest(codec="flac", encryption_type="NONE"):
+    payload = {
+        "urls": ["https://example.com/audio.flac"],
+        "codecs": codec,
+        "encryptionType": encryption_type,
+    }
+    return base64.b64encode(json.dumps(payload).encode("utf-8")).decode("ascii")
+
+
 def test_parse_flac_dash_manifest_extracts_segment_urls():
     manifest = parse_flac_dash_manifest(encoded_mpd())
 
@@ -50,6 +61,34 @@ def test_parse_flac_dash_manifest_extracts_segment_urls():
 def test_parse_flac_dash_manifest_rejects_non_flac_codec():
     with pytest.raises(NoFlacRepresentation, match="Expected FLAC"):
         parse_flac_dash_manifest(encoded_mpd("mp4a.40.2"))
+
+
+def test_parse_flac_dash_manifest_extracts_tidal_json_url():
+    manifest = parse_flac_dash_manifest(encoded_json_manifest())
+
+    assert manifest.initialization_url == "https://example.com/audio.flac"
+    assert manifest.segment_urls == []
+    assert manifest.codec == "flac"
+
+
+def test_parse_flac_dash_manifest_requires_confirmation_for_aac_json():
+    with pytest.raises(LossyAudioAvailable, match="mp4a"):
+        parse_flac_dash_manifest(encoded_json_manifest(codec="mp4a.40.2"))
+
+
+def test_parse_flac_dash_manifest_accepts_confirmed_aac_json():
+    manifest = parse_flac_dash_manifest(
+        encoded_json_manifest(codec="mp4a.40.2"),
+        allow_lossy_audio=True,
+    )
+
+    assert manifest.initialization_url == "https://example.com/audio.flac"
+    assert manifest.codec == "mp4a.40.2"
+
+
+def test_parse_flac_dash_manifest_rejects_encrypted_tidal_json():
+    with pytest.raises(NoFlacRepresentation, match="Encrypted"):
+        parse_flac_dash_manifest(encoded_json_manifest(encryption_type="OLD_AES"))
 
 
 def test_safe_name_removes_path_separators_and_invalid_characters():

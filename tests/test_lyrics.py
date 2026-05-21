@@ -53,3 +53,18 @@ def test_write_lrc_creates_same_stem_sidecar(tmp_path):
 
     assert lrc == tmp_path / "song.lrc"
     assert lrc.read_text(encoding="utf-8") == "[00:01.00] line\n"
+
+
+def test_embed_mp4_lyrics_writes_mp4_lyrics_tag(monkeypatch, tmp_path):
+    from app import lyrics
+
+    class FakeAudio(dict):
+        def save(self):
+            self["saved"] = ["yes"]
+
+    audio = FakeAudio()
+    monkeypatch.setattr(lyrics, "MP4", lambda path: audio)
+
+    assert lyrics.embed_mp4_lyrics(tmp_path / "song.m4a", "hello") is True
+    assert audio["\xa9lyr"] == ["hello"]
+    assert audio["saved"] == ["yes"]

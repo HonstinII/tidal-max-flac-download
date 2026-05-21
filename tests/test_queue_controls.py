@@ -21,8 +21,15 @@ def seed_run(db):
 def test_retry_failed_item_resets_status(monkeypatch, tmp_path):
     db = AppDatabase(tmp_path / "queue.db")
     seed_run(db)
+    manager = DownloadJobManager(database=db)
+    started = []
+
+    def fake_start_run(run_id):
+        started.append(run_id)
+
+    monkeypatch.setattr(manager, "start_run", fake_start_run)
     monkeypatch.setattr("app.main.database", db)
-    monkeypatch.setattr("app.main.job_manager", DownloadJobManager(database=db))
+    monkeypatch.setattr("app.main.job_manager", manager)
 
     client = TestClient(app)
     response = client.post("/api/queue/items/item-1/retry")
@@ -31,6 +38,23 @@ def test_retry_failed_item_resets_status(monkeypatch, tmp_path):
     assert item["status"] == "ready"
     assert item["attempts"] == 1
     assert item["error"] is None
+    assert response.json()["run"]["status"] == "queued"
+    assert started == ["run-1"]
+
+
+def test_retry_can_allow_lossy_audio(monkeypatch, tmp_path):
+    db = AppDatabase(tmp_path / "queue.db")
+    seed_run(db)
+    manager = DownloadJobManager(database=db)
+    monkeypatch.setattr(manager, "start_run", lambda run_id: None)
+    monkeypatch.setattr("app.main.database", db)
+    monkeypatch.setattr("app.main.job_manager", manager)
+
+    client = TestClient(app)
+    response = client.post("/api/queue/items/item-1/retry", json={"allow_lossy_audio": True})
+
+    assert response.json()["item"]["status"] == "ready"
+    assert response.json()["run"]["options"]["allow_lossy_audio"] is True
 
 
 def test_pause_resume_and_cancel_run(monkeypatch, tmp_path):

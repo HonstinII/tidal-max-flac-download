@@ -17,3 +17,31 @@ def test_build_metaflac_command_imports_front_cover():
         "--import-picture-from=3|image/jpeg|||/tmp/cover.jpg",
         "/tmp/song.flac",
     ]
+
+
+def test_embed_mp4_cover_writes_covr_tag(monkeypatch, tmp_path):
+    from app import covers
+
+    class FakeAudio(dict):
+        def save(self):
+            self["saved"] = ["yes"]
+
+    class FakeCover(bytes):
+        FORMAT_JPEG = 13
+
+        def __new__(cls, data, imageformat=None):
+            value = bytes.__new__(cls, data)
+            value.imageformat = imageformat
+            return value
+
+    image = tmp_path / "cover.jpg"
+    image.write_bytes(b"jpg")
+    audio = FakeAudio()
+    monkeypatch.setattr(covers, "download_cover", lambda *args, **kwargs: image)
+    monkeypatch.setattr(covers, "MP4", lambda path: audio)
+    monkeypatch.setattr(covers, "MP4Cover", FakeCover)
+
+    assert covers.embed_mp4_cover(tmp_path / "song.m4a", "cover-id", tmp_path) is True
+    assert audio["covr"][0] == b"jpg"
+    assert audio["covr"][0].imageformat == FakeCover.FORMAT_JPEG
+    assert audio["saved"] == ["yes"]

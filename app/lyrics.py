@@ -2,6 +2,7 @@ from pathlib import Path
 import subprocess
 
 from mutagen.flac import FLAC
+from mutagen.mp4 import MP4
 
 
 def extract_lyrics_text(payload: dict, mode: str = "auto") -> str:
@@ -35,6 +36,15 @@ def embed_lyrics(flac_path: Path, lyrics: str | None) -> bool:
         return False
     audio = FLAC(str(flac_path))
     audio["LYRICS"] = lyrics
+    audio.save()
+    return True
+
+
+def embed_mp4_lyrics(mp4_path: Path, lyrics: str | None) -> bool:
+    if not lyrics:
+        return False
+    audio = MP4(str(mp4_path))
+    audio["\xa9lyr"] = [lyrics]
     audio.save()
     return True
 

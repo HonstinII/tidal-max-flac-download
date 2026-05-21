@@ -1,4 +1,5 @@
 import base64
+import json
 import shutil
 import subprocess
 import tempfile
@@ -15,6 +16,10 @@ from .tidal_api import TrackItem
 
 
 class NoFlacRepresentation(RuntimeError):
+    pass
+
+
+class LossyAudioAvailable(NoFlacRepresentation):
     pass
 
 
@@ -35,6 +40,7 @@ class DownloadOptions:
     album_template: str = "{album_artist}/{album} ({year})"
     filename_template: str = "{track_number}. {artist} - {title}"
     single_filename_template: str = "{artist} - {title}"
+    allow_lossy_audio: bool = False
 
 
 @dataclass(frozen=True)
@@ -76,8 +82,10 @@ def safe_relative_path(value: str) -> Path:
     return Path(*parts) if parts else Path("untitled")
 
 
-def parse_flac_dash_manifest(manifest_b64: str) -> FlacDashManifest:
+def parse_flac_dash_manifest(manifest_b64: str, allow_lossy_audio: bool = False) -> FlacDashManifest:
     xml = base64.b64decode(manifest_b64).decode("utf-8")
+    if xml.lstrip().startswith("{"):
+        return parse_tidal_json_manifest(xml, allow_lossy_audio=allow_lossy_audio)
     root = ET.fromstring(xml)
     ns = {"mpd": "urn:mpeg:dash:schema:mpd:2011"}
     rep = root.find(".//mpd:Representation", ns)
@@ -101,6 +109,34 @@ def parse_flac_dash_manifest(manifest_b64: str) -> FlacDashManifest:
         ],
         codec=codec,
         sample_rate=rep.attrib.get("audioSamplingRate"),
+    )
+
+
+def parse_tidal_json_manifest(manifest_json: str, allow_lossy_audio: bool = False) -> FlacDashManifest:
+    manifest = json.loads(manifest_json)
+    codec = str(manifest.get("codecs") or "")
+    if codec.lower() not in {"flac", "mqa"}:
+        if not allow_lossy_audio:
+            raise LossyAudioAvailable(
+                f"Tidal returned {codec!r} instead of FLAC. This track or account is not exposing a FLAC stream for the selected quality."
+            )
+        if not codec.lower().startswith("mp4a"):
+            raise NoFlacRepresentation(
+                f"Expected FLAC or AAC representation, got {codec!r}."
+            )
+    if manifest.get("encryptionType") not in {None, "NONE"}:
+        raise NoFlacRepresentation("Encrypted Tidal streams are not supported.")
+    urls = manifest.get("urls") or []
+    if not urls:
+        restrictions = manifest.get("restrictions") or []
+        if restrictions:
+            raise NoFlacRepresentation(str(restrictions[0].get("code") or restrictions[0]))
+        raise NoFlacRepresentation("Missing Tidal stream URL.")
+    return FlacDashManifest(
+        initialization_url=str(urls[0]),
+        segment_urls=[],
+        codec=codec,
+        sample_rate=None,
     )
 
 
@@ -148,6 +184,8 @@ def download_track_as_flac(
 ) -> DownloadResult:
     emit = emit or (lambda event: None)
     output = build_output_path(track, options)
+    if manifest.codec.lower().startswith("mp4a"):
+        output = output.with_suffix(".m4a")
     output.parent.mkdir(parents=True, exist_ok=True)
     output, output_status = prepare_output_path(output, options)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -190,6 +228,7 @@ def download_track_as_flac(
             for part in parts:
                 handle.write(part.read_bytes())
 
+        audio_codec = "copy" if manifest.codec.lower().startswith("mp4a") else "flac"
         cmd = [
             "ffmpeg",
             "-y",
@@ -201,7 +240,7 @@ def download_track_as_flac(
             "-map",
             "0:a:0",
             "-c:a",
-            "flac",
+            audio_codec,
             "-metadata",
             f"title={track.title}",
             "-metadata",
