@@ -11,7 +11,7 @@ def test_pages_has_direct_release_download_buttons():
     assert "Download for Windows" in html
     assert "Tidal-Max-FLAC-Studio-macOS.zip" in html
     assert "Tidal-Max-FLAC-Studio-Windows.zip" in html
-    assert "releases/download/v0.1.3" in html
+    assert "releases/download/v0.1.4" in html
 
 
 def test_pages_omits_explainer_cards():
