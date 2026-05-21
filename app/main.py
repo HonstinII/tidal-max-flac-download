@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -13,6 +14,7 @@ from .tidal_config import clear_tidal_auth, write_tidal_auth
 from .jobs import DownloadJobManager, JobOptions
 from .folders import open_folder, pick_folder
 from .installer import InstallJobManager, extract_bundled_flac
+from .storage import AppDatabase
 from .tidal_api import TidalApi, TrackItem, parse_tidal_url
 from .tidal_config import read_tidal_auth
 
@@ -24,6 +26,8 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 auth_manager = TidalAuthManager()
 job_manager = DownloadJobManager()
 install_manager = InstallJobManager()
+database = AppDatabase()
+database.initialize()
 
 
 class JobRequest(BaseModel):
@@ -37,6 +41,16 @@ class JobRequest(BaseModel):
 
 class PreviewRequest(BaseModel):
     urls: list[str]
+
+
+class QueueRequest(BaseModel):
+    urls: list[str]
+    output_dir: str | None = None
+    concurrency: int = 10
+    embed_covers: bool = True
+    embed_lyrics: bool = True
+    skip_existing: bool = True
+    existing_strategy: str = "skip"
 
 
 class FolderRequest(BaseModel):
@@ -97,6 +111,43 @@ def preview_urls(request: PreviewRequest):
         except Exception as error:
             errors.append({"url": url, "message": str(error)})
     return {"items": items, "errors": errors}
+
+
+@app.post("/api/queue")
+def create_queue(request: QueueRequest):
+    auth = read_tidal_auth(default_config().streamrip_config)
+    api = TidalApi(auth)
+    output_dir = request.output_dir or str(default_config().output_dir)
+    run_id = str(uuid.uuid4())
+    options = {
+        "concurrency": request.concurrency,
+        "embed_covers": request.embed_covers,
+        "embed_lyrics": request.embed_lyrics,
+        "existing_strategy": request.existing_strategy,
+        "skip_existing": request.skip_existing,
+    }
+    run = database.create_run(run_id, "queued", output_dir, options)
+    items = []
+    for url in request.urls:
+        ref = parse_tidal_url(url)
+        for track in api.resolve(ref):
+            items.append(
+                database.create_queue_item(
+                    item_id=str(uuid.uuid4()),
+                    run_id=run_id,
+                    source_url=url,
+                    source_kind=ref.kind,
+                    source_id=ref.item_id,
+                    track=preview_track(track),
+                    status="ready",
+                )
+            )
+    return {"run": run, "items": items}
+
+
+@app.get("/api/queue")
+def get_queue():
+    return {"items": database.list_queue_items()}
 
 
 @app.post("/api/tools/install")
