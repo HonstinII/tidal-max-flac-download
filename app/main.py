@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.responses import PlainTextResponse
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -24,10 +25,10 @@ STATIC_DIR = APP_DIR / "static"
 app = FastAPI(title="Tidal Max FLAC Studio")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 auth_manager = TidalAuthManager()
-job_manager = DownloadJobManager()
 install_manager = InstallJobManager()
 database = AppDatabase()
 database.initialize()
+job_manager = DownloadJobManager(database=database)
 
 
 class JobRequest(BaseModel):
@@ -148,6 +149,72 @@ def create_queue(request: QueueRequest):
 @app.get("/api/queue")
 def get_queue():
     return {"items": database.list_queue_items()}
+
+
+@app.post("/api/queue/runs/{run_id}/start")
+def start_queue_run(run_id: str):
+    job_manager.start_run(run_id)
+    return {"run": database.get_run(run_id)}
+
+
+@app.get("/api/queue/runs/{run_id}/events")
+def get_queue_events(run_id: str):
+    return StreamingResponse(
+        job_manager.queue_events(run_id),
+        media_type="text/event-stream",
+    )
+
+
+@app.post("/api/queue/items/{item_id}/retry")
+def retry_queue_item(item_id: str):
+    item = job_manager.retry_item(item_id)
+    return {"item": item}
+
+
+@app.post("/api/queue/runs/{run_id}/pause")
+def pause_queue_run(run_id: str):
+    return {"run": job_manager.pause_run(run_id)}
+
+
+@app.post("/api/queue/runs/{run_id}/resume")
+def resume_queue_run(run_id: str):
+    return {"run": job_manager.resume_run(run_id)}
+
+
+@app.post("/api/queue/runs/{run_id}/cancel")
+def cancel_queue_run(run_id: str):
+    return {"run": job_manager.cancel_run(run_id)}
+
+
+@app.get("/api/history")
+def get_history():
+    return {"runs": database.list_runs()}
+
+
+@app.get("/api/logs/{run_id}.txt", response_class=PlainTextResponse)
+def export_log(run_id: str):
+    run = database.get_run(run_id)
+    if not run:
+        return "Run not found."
+    lines = [
+        "Tidal Max FLAC Studio Download Log",
+        f"Run: {run['id']}",
+        f"Status: {run['status']}",
+        f"Output: {run['output_dir']}",
+        f"Options: {run['options']}",
+        "",
+        "Tracks:",
+    ]
+    for item in database.list_queue_items(run_id):
+        lines.extend(
+            [
+                f"- {item.get('artist') or ''} - {item.get('title') or item.get('track_id')}",
+                f"  Status: {item['status']}",
+                f"  Output: {item.get('output_path') or ''}",
+                f"  Error: {item.get('error') or ''}",
+            ]
+        )
+    return "\n".join(lines)
 
 
 @app.post("/api/tools/install")
