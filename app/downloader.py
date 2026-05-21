@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 import re
-from typing import Callable
+from typing import Callable, Literal
 
 import requests
 
@@ -31,6 +31,7 @@ class DownloadOptions:
     output_dir: Path
     concurrency: int = 10
     skip_existing: bool = True
+    existing_strategy: Literal["skip", "overwrite", "keep_both"] | None = None
 
 
 @dataclass(frozen=True)
@@ -84,6 +85,26 @@ def build_output_path(track: TrackItem, output_dir: Path) -> Path:
     return output_dir / f"{safe_name(track.artist)} - {safe_name(track.title)}.flac"
 
 
+def prepare_output_path(output: Path, options: DownloadOptions) -> tuple[Path, str]:
+    strategy = options.existing_strategy
+    if strategy is None:
+        strategy = "skip" if options.skip_existing else "overwrite"
+    if not output.exists():
+        return output, "download"
+    if strategy == "skip" and output.stat().st_size > 1024 * 1024:
+        return output, "skipped"
+    if strategy == "overwrite":
+        return output, "download"
+    if strategy == "keep_both":
+        index = 2
+        while True:
+            candidate = output.with_name(f"{output.stem} ({index}){output.suffix}")
+            if not candidate.exists():
+                return candidate, "download"
+            index += 1
+    return output, "download"
+
+
 def download_track_as_flac(
     track: TrackItem,
     manifest: FlacDashManifest,
@@ -94,7 +115,9 @@ def download_track_as_flac(
     emit = emit or (lambda event: None)
     output = build_output_path(track, options.output_dir)
     output.parent.mkdir(parents=True, exist_ok=True)
-    if options.skip_existing and output.exists() and output.stat().st_size > 1024 * 1024:
+    output, output_status = prepare_output_path(output, options)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    if output_status == "skipped":
         emit(
             {
                 "stage": "skipped",
@@ -110,6 +133,7 @@ def download_track_as_flac(
     with tempfile.TemporaryDirectory(prefix="tidal-max-") as tmp:
         tmp_path = Path(tmp)
         urls = list(enumerate([manifest.initialization_url, *manifest.segment_urls]))
+        total_parts = len(urls)
         parts = []
         with ThreadPoolExecutor(max_workers=max(1, options.concurrency)) as executor:
             futures = [
@@ -117,7 +141,14 @@ def download_track_as_flac(
             ]
             for future in as_completed(futures):
                 parts.append(future.result())
-                emit({"stage": "segment", "track_id": track.track_id})
+                emit(
+                    {
+                        "stage": "segment",
+                        "track_id": track.track_id,
+                        "current": len(parts),
+                        "total": total_parts,
+                    }
+                )
         parts.sort()
 
         joined = tmp_path / "joined.mp4"

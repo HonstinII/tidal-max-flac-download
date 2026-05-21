@@ -1,8 +1,16 @@
 import base64
 
+from pathlib import Path
+
 import pytest
 
-from app.downloader import NoFlacRepresentation, parse_flac_dash_manifest, safe_name
+from app.downloader import (
+    DownloadOptions,
+    NoFlacRepresentation,
+    prepare_output_path,
+    parse_flac_dash_manifest,
+    safe_name,
+)
 
 
 def encoded_mpd(codec="flac"):
@@ -44,3 +52,34 @@ def test_parse_flac_dash_manifest_rejects_non_flac_codec():
 
 def test_safe_name_removes_path_separators_and_invalid_characters():
     assert safe_name('A/B:C*D?"E<>|') == "ABCDE"
+
+
+def test_prepare_output_path_skips_existing_file(tmp_path):
+    output = tmp_path / "song.flac"
+    output.write_bytes(b"x" * 1024 * 1024 * 2)
+
+    prepared, status = prepare_output_path(output, DownloadOptions(tmp_path, existing_strategy="skip"))
+
+    assert prepared == output
+    assert status == "skipped"
+
+
+def test_prepare_output_path_overwrites_existing_file(tmp_path):
+    output = tmp_path / "song.flac"
+    output.write_text("old")
+
+    prepared, status = prepare_output_path(output, DownloadOptions(tmp_path, existing_strategy="overwrite"))
+
+    assert prepared == output
+    assert status == "download"
+
+
+def test_prepare_output_path_keeps_both_files(tmp_path):
+    output = tmp_path / "song.flac"
+    output.write_text("old")
+    (tmp_path / "song (2).flac").write_text("old")
+
+    prepared, status = prepare_output_path(output, DownloadOptions(tmp_path, existing_strategy="keep_both"))
+
+    assert prepared == tmp_path / "song (3).flac"
+    assert status == "download"
