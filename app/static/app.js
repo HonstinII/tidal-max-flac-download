@@ -350,14 +350,6 @@ function renderChecks() {
       required: true,
       path: details.ffmpeg?.path,
     }),
-    checkRow({
-      label: "streamrip config",
-      ok: state.setup.streamrip_config.exists,
-      detail: state.setup.streamrip_config.path,
-      description: t("checkConfig"),
-      required: true,
-      missingText: t("bindingRequired"),
-    }),
   ].join("");
   els.installToolsButton.classList.remove("hidden");
 }
