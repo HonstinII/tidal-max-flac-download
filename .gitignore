@@ -13,3 +13,5 @@ config.toml
 build/
 dist/
 *.spec
+
+.worktrees/
