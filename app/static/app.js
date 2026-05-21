@@ -62,6 +62,7 @@ const copy = {
   en: {
     ready: "Ready",
     missing: "Missing",
+    bindingRequired: "Tidal binding required",
     checkingBinding: "Checking binding...",
     bound: "Bound to Tidal",
     notBound: "Tidal not bound",
@@ -81,7 +82,7 @@ const copy = {
     checkStreamrip: "Core download tool that manages Tidal-compatible download configuration.",
     checkFfmpeg: "Core audio processor used to assemble and write FLAC files.",
     checkMetaflac: "Optional metadata helper for embedding cover art into FLAC files.",
-    checkConfig: "Core local config file used to store Tidal authorization safely.",
+    checkConfig: "Tidal authorization file. It is created after you bind Tidal; this is not a tool install.",
     installMissing: "Install missing tools",
     useBundledFlac: "Use bundled FLAC tools",
     optionalCoverTool: "Optional cover tool",
@@ -159,6 +160,7 @@ const copy = {
   zh: {
     ready: "就绪",
     missing: "缺失",
+    bindingRequired: "需要绑定 Tidal",
     checkingBinding: "正在检查绑定...",
     bound: "已绑定 Tidal",
     notBound: "Tidal 未绑定",
@@ -178,7 +180,7 @@ const copy = {
     checkStreamrip: "核心下载工具，用来管理兼容 Tidal 的下载配置。",
     checkFfmpeg: "核心音频处理工具，用来合并音频并写出 FLAC 文件。",
     checkMetaflac: "可选元数据工具，用来把封面嵌入 FLAC 文件。",
-    checkConfig: "核心本地配置文件，用来安全保存 Tidal 授权。",
+    checkConfig: "Tidal 授权文件。绑定 Tidal 后会自动生成，这不是工具安装项。",
     installMissing: "安装缺失工具",
     useBundledFlac: "使用内置 FLAC 工具",
     optionalCoverTool: "可选封面工具",
@@ -288,9 +290,9 @@ function applyLanguage() {
   }
 }
 
-function checkRow({ label, ok, detail, description, required, path }) {
+function checkRow({ label, ok, detail, description, required, path, missingText }) {
   const stateClass = ok ? "ok" : required ? "bad" : "warn";
-  const stateText = ok ? t("ready") : t("missing");
+  const stateText = ok ? t("ready") : missingText || t("missing");
   const requirement = required ? t("core") : t("optional");
   const toolPath = path ? `<small>${path}</small>` : "";
   return `
@@ -354,6 +356,7 @@ function renderChecks() {
       detail: state.setup.streamrip_config.path,
       description: t("checkConfig"),
       required: true,
+      missingText: t("bindingRequired"),
     }),
   ].join("");
   els.installToolsButton.classList.remove("hidden");
