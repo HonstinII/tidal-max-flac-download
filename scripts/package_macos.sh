@@ -17,6 +17,7 @@ fi
   --icon "assets/app_icon.icns" \
   --osx-bundle-identifier "com.honstinii.tidalmaxflacstudio" \
   --add-data "app/static:app/static" \
+  --add-data "app/tools:app/tools" \
   --hidden-import "uvicorn.logging" \
   --hidden-import "uvicorn.loops" \
   --hidden-import "uvicorn.loops.auto" \

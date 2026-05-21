@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import json
 import platform
 import queue
+import shutil
 import subprocess
 import threading
 import uuid
@@ -63,8 +64,6 @@ def build_install_commands(tools: dict[str, bool], platform_name: str | None = N
     brew_packages = []
     if not tools.get("ffmpeg", False):
         brew_packages.append("ffmpeg")
-    if not tools.get("metaflac", False):
-        brew_packages.append("flac")
     if brew_packages:
         commands.append(["brew", "install", *brew_packages])
     if not tools.get("streamrip", False):
@@ -92,7 +91,7 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
 
     if system == "Darwin":
         homebrew_ok = managers.get("homebrew", {}).get("ok", False)
-        if not homebrew_ok and (missing("ffmpeg") or missing("metaflac")):
+        if not homebrew_ok and missing("ffmpeg"):
             manual_guides.append(
                 InstallStep(
                     tool="homebrew",
@@ -121,16 +120,6 @@ def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
                     command=["brew", "install", "ffmpeg"],
                     required=True,
                     manual_command=commands.get("ffmpeg"),
-                )
-            )
-        if homebrew_ok and missing("metaflac"):
-            steps.append(
-                InstallStep(
-                    tool="metaflac",
-                    label="Install FLAC tools",
-                    command=["brew", "install", "flac"],
-                    required=False,
-                    manual_command=commands.get("metaflac"),
                 )
             )
     elif system == "Windows":
@@ -220,6 +209,14 @@ def extract_bundled_flac(
     target_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path) as archive:
         archive.extractall(target_dir)
+    preferred_dirs = [target_dir / "flac-1.5.0-win" / "Win64", target_dir / "Win64"]
+    for source_dir in preferred_dirs:
+        if (source_dir / "metaflac.exe").exists():
+            for filename in ("metaflac.exe", "flac.exe", "libFLAC.dll", "libFLAC++.dll"):
+                source = source_dir / filename
+                if source.exists():
+                    shutil.copy2(source, target_dir / filename)
+            break
     return {"ok": True, "message": "Bundled FLAC tools extracted.", "target": str(target_dir)}
 
 

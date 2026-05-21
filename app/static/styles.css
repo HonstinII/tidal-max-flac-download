@@ -294,6 +294,39 @@ h2 {
   border-color: var(--error);
 }
 
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 8, 7, 0.7);
+  padding: 24px;
+}
+
+.modal {
+  width: min(480px, 100%);
+  border: 1px solid var(--line);
+  background: #111714;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.46);
+  padding: 22px;
+}
+
+.modal-source {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.modal-source a {
+  color: var(--meter);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 .account-control {
   position: relative;
 }

@@ -18,6 +18,8 @@ def test_package_scripts_use_product_name_and_icons():
     assert '--name "Tidal Max FLAC Studio"' in macos_script
     assert '--icon "assets/app_icon.icns"' in macos_script
     assert "--osx-bundle-identifier" in macos_script
+    assert '--add-data "app/tools:app/tools"' in macos_script
 
     assert '--name "Tidal Max FLAC Studio"' in windows_script
     assert '--icon "assets/app_icon.ico"' in windows_script
+    assert '--add-data "app/tools;app/tools"' in windows_script

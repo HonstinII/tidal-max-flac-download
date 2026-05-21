@@ -1,6 +1,9 @@
-Place a redistributable FLAC tools archive at `flac.zip` to enable the
-Windows "Use bundled FLAC tools" setup option.
+`flac.zip` is the official FLAC 1.5.0 Windows tools archive from Xiph.org:
 
-The archive should contain `metaflac.exe` either at the archive root or inside
-a `bin/` directory. The app extracts it into the user-local managed tools
-folder and adds that folder to the runtime search path.
+```text
+https://github.com/xiph/flac/releases/download/1.5.0/flac-1.5.0-win.zip
+```
+
+It contains `metaflac.exe`, `flac.exe`, and the upstream license files. The app
+uses it only for the optional cover-embedding flow, extracts it into the
+user-local managed tools folder, and adds that folder to the runtime search path.

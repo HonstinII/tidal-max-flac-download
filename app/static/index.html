@@ -42,9 +42,6 @@
           <button id="installToolsButton" type="button" class="secondary-button install-button hidden" data-i18n="installMissing">
             Install missing tools
           </button>
-          <button id="bundledFlacButton" type="button" class="secondary-button install-button hidden" data-i18n="useBundledFlac">
-            Use bundled FLAC tools
-          </button>
           <button id="recheckButton" type="button" class="secondary-button install-button" data-i18n="recheck">
             Recheck
           </button>
@@ -115,6 +112,23 @@
         </section>
       </section>
     </main>
+    <div id="coverToolModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="coverToolTitle">
+      <div class="modal">
+        <p class="section-kicker" data-i18n="optionalCoverTool">Optional cover tool</p>
+        <h2 id="coverToolTitle" data-i18n="coverToolMissingTitle">Cover embedding needs metaflac</h2>
+        <p class="muted" data-i18n="coverToolMissingCopy">
+          Downloads can continue without this tool, but cover art cannot be embedded into FLAC files.
+        </p>
+        <p class="modal-source">
+          <span data-i18n="officialSource">Official source</span>:
+          <a href="https://xiph.org/flac/download.html" target="_blank" rel="noreferrer">xiph.org/flac</a>
+        </p>
+        <div class="modal-actions">
+          <button id="installCoverToolButton" type="button" class="primary-button" data-i18n="installCoverTool">Install cover tool</button>
+          <button id="cancelCoverToolButton" type="button" class="secondary-button" data-i18n="cancelCoverTool">Cancel</button>
+        </div>
+      </div>
+    </div>
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
     <script src="/static/app.js"></script>
   </body>

@@ -21,7 +21,6 @@ const els = {
   checks: document.querySelector("#checks"),
   platformInfo: document.querySelector("#platformInfo"),
   installToolsButton: document.querySelector("#installToolsButton"),
-  bundledFlacButton: document.querySelector("#bundledFlacButton"),
   recheckButton: document.querySelector("#recheckButton"),
   installLog: document.querySelector("#installLog"),
   bindButton: document.querySelector("#bindButton"),
@@ -37,6 +36,9 @@ const els = {
   downloadButton: document.querySelector("#downloadButton"),
   events: document.querySelector("#events"),
   jobStatus: document.querySelector("#jobStatus"),
+  coverToolModal: document.querySelector("#coverToolModal"),
+  installCoverToolButton: document.querySelector("#installCoverToolButton"),
+  cancelCoverToolButton: document.querySelector("#cancelCoverToolButton"),
   toast: document.querySelector("#toast"),
 };
 
@@ -55,7 +57,7 @@ const copy = {
     step1: "Step 1",
     step2: "Step 2",
     checkChain: "Check the chain",
-    checkChainCopy: "Core tools must be ready before the downloader opens. Optional tools only affect cover or metadata extras.",
+    checkChainCopy: "Core tools must be ready before the downloader opens. Cover embedding is checked only when you enable it.",
     bindTidal: "Bind Tidal",
     bindTidalCopy: "Open Tidal's official authorization page. You sign in there; this app never sees your password.",
     startBinding: "Start Tidal binding",
@@ -66,6 +68,14 @@ const copy = {
     checkConfig: "Core local config file used to store Tidal authorization safely.",
     installMissing: "Install missing tools",
     useBundledFlac: "Use bundled FLAC tools",
+    optionalCoverTool: "Optional cover tool",
+    coverToolMissingTitle: "Cover embedding needs metaflac",
+    coverToolMissingCopy: "Downloads can continue without this tool, but cover art cannot be embedded into FLAC files.",
+    officialSource: "Official source",
+    installCoverTool: "Install cover tool",
+    cancelCoverTool: "Cancel",
+    coverToolInstalling: "Installing cover embedding tool...",
+    coverToolInstalled: "Cover tool is ready. Cover embedding is enabled.",
     recheck: "Recheck",
     platform: "Platform",
     copyCommand: "Copy command",
@@ -120,7 +130,7 @@ const copy = {
     step1: "步骤 1",
     step2: "步骤 2",
     checkChain: "检查环境",
-    checkChainCopy: "核心工具就绪后才能进入下载台；可选工具只影响封面或元数据增强。",
+    checkChainCopy: "核心工具就绪后才能进入下载台；封面嵌入只在你启用时检查。",
     bindTidal: "绑定 Tidal",
     bindTidalCopy: "打开 Tidal 官方授权页。你在那里登录，本应用不会看到你的密码。",
     startBinding: "开始绑定 Tidal",
@@ -131,6 +141,14 @@ const copy = {
     checkConfig: "核心本地配置文件，用来安全保存 Tidal 授权。",
     installMissing: "安装缺失工具",
     useBundledFlac: "使用内置 FLAC 工具",
+    optionalCoverTool: "可选封面工具",
+    coverToolMissingTitle: "嵌入封面需要 metaflac",
+    coverToolMissingCopy: "没有这个工具也可以继续下载，但无法把封面写入 FLAC 文件。",
+    officialSource: "官方来源",
+    installCoverTool: "安装封面工具",
+    cancelCoverTool: "取消",
+    coverToolInstalling: "正在安装封面嵌入工具...",
+    coverToolInstalled: "封面工具已就绪，已启用嵌入封面。",
     recheck: "重新检查",
     platform: "平台",
     copyCommand: "复制命令",
@@ -229,14 +247,7 @@ function hasCoreSetup() {
 
 function missingInstallableTools() {
   if (!state.setup) return [];
-  return ["streamrip", "ffmpeg", "metaflac"].filter((tool) => !state.setup.tools?.[tool]);
-}
-
-function showBundledFlacOption() {
-  return Boolean(
-    state.setup?.platform?.system === "Windows" &&
-      state.setup?.tools?.metaflac === false,
-  );
+  return ["streamrip", "ffmpeg"].filter((tool) => !state.setup.tools?.[tool]);
 }
 
 async function refreshSetup() {
@@ -269,14 +280,6 @@ function renderChecks() {
       path: details.ffmpeg?.path,
     }),
     checkRow({
-      label: "metaflac",
-      ok: state.setup.tools.metaflac,
-      detail: state.setup.tools.metaflac ? "" : t("notFound"),
-      description: details.metaflac?.description || t("checkMetaflac"),
-      required: false,
-      path: details.metaflac?.path,
-    }),
-    checkRow({
       label: "streamrip config",
       ok: state.setup.streamrip_config.exists,
       detail: state.setup.streamrip_config.path,
@@ -285,7 +288,6 @@ function renderChecks() {
     }),
   ].join("");
   els.installToolsButton.classList.toggle("hidden", missingInstallableTools().length === 0);
-  els.bundledFlacButton.classList.toggle("hidden", !showBundledFlacOption());
 }
 
 function renderMode() {
@@ -419,6 +421,10 @@ async function startDownload() {
     addEvent({ stage: "error", message: t("pasteAtLeastOne") });
     return;
   }
+  if (els.embedCovers.checked && !state.setup?.tools?.metaflac) {
+    showCoverToolModal();
+    return;
+  }
   els.downloadButton.disabled = true;
   els.openFolder.classList.add("hidden");
   els.events.innerHTML = "";
@@ -500,17 +506,30 @@ async function installMissingTools() {
 }
 
 async function useBundledFlac() {
-  els.bundledFlacButton.disabled = true;
+  els.installCoverToolButton.disabled = true;
+  showToast(t("coverToolInstalling"), "info");
   const response = await fetch("/api/tools/bundled-flac", { method: "POST" });
   const result = await response.json();
   if (result.ok) {
-    showToast(t("bundledFlacReady"), "success", 2500);
+    showToast(t("coverToolInstalled"), "success", 2500);
   } else {
     showToast(result.message || t("bundledFlacMissing"), "error", 5000);
     addInstallLog(result.message || t("bundledFlacMissing"));
   }
-  els.bundledFlacButton.disabled = false;
+  els.installCoverToolButton.disabled = false;
   await refreshSetup();
+  if (state.setup?.tools?.metaflac) {
+    els.embedCovers.checked = true;
+    hideCoverToolModal();
+  }
+}
+
+function showCoverToolModal() {
+  els.coverToolModal.classList.remove("hidden");
+}
+
+function hideCoverToolModal() {
+  els.coverToolModal.classList.add("hidden");
 }
 
 async function unbindTidal() {
@@ -537,8 +556,18 @@ function toggleAccountMenu() {
 els.bindButton.addEventListener("click", startBinding);
 els.downloadButton.addEventListener("click", startDownload);
 els.installToolsButton.addEventListener("click", installMissingTools);
-els.bundledFlacButton.addEventListener("click", useBundledFlac);
+els.installCoverToolButton.addEventListener("click", useBundledFlac);
+els.cancelCoverToolButton.addEventListener("click", () => {
+  els.embedCovers.checked = false;
+  hideCoverToolModal();
+});
 els.recheckButton.addEventListener("click", refreshSetup);
+els.embedCovers.addEventListener("change", () => {
+  if (els.embedCovers.checked && !state.setup?.tools?.metaflac) {
+    els.embedCovers.checked = false;
+    showCoverToolModal();
+  }
+});
 els.workspaceAccountButton.addEventListener("click", toggleAccountMenu);
 els.unbindButton.addEventListener("click", unbindTidal);
 document.addEventListener("click", (event) => {

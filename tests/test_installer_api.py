@@ -45,7 +45,7 @@ def test_install_missing_tools_api_streams_command_events(monkeypatch):
 
     events = client.get(f"/api/tools/install/{job_id}/events").text
 
-    assert calls == [["brew", "install", "ffmpeg"], ["brew", "install", "flac"]]
+    assert calls == [["brew", "install", "ffmpeg"]]
     assert "step_started" in events
     assert "brew install ffmpeg" in events
     assert "fake install ok" in events

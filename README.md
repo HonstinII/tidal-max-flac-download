@@ -32,19 +32,19 @@ After pushing to GitHub, enable Pages from **Settings -> Pages -> GitHub Actions
 
 ## Requirements
 
-- macOS
-- Homebrew
+- macOS or Windows
 - Python 3.12 or newer
 - `streamrip`
 - `ffmpeg`
-- `metaflac` from the `flac` package
+- Optional: `metaflac` from the official FLAC tools for embedded cover art
 - A Tidal account with access to the tracks you download
 
-The UI can install missing macOS tools from the setup screen:
+The UI can install missing core tools from the setup screen:
 
 - `streamrip`: `python3 -m pip install --user streamrip`
 - `ffmpeg`: `brew install ffmpeg`
-- `metaflac`: `brew install flac`
+
+On Windows, the packaged app includes the official FLAC 1.5.0 Windows tools from Xiph.org for the optional cover-embedding path. When **Embed cover art** is enabled and `metaflac` is missing, the app shows a dialog with the official source URL and a one-click install button.
 
 ## Install
 
@@ -124,7 +124,7 @@ The packaged macOS app and Windows executable use the product name **Tidal Max F
 
 On first launch, the app shows a two-step binding guide.
 
-1. Check local tools.
+1. Check core local tools.
 2. Click **Start Tidal binding**, then click the authorization page link.
 
 The app automatically detects the token and writes it to the local streamrip-compatible config:
@@ -152,17 +152,23 @@ Output defaults to:
 
 The app requests Tidal `HI_RES` playback and requires a FLAC DASH representation. It does not silently save AAC when FLAC is unavailable.
 
-The download workspace can open the output folder picker and open the selected folder in Finder. It can embed Tidal cover art into the FLAC file and write available Tidal lyrics into the FLAC `LYRICS` tag.
+The download workspace can open the output folder picker and open the selected folder in Finder. It can embed Tidal cover art into the FLAC file and write available Tidal lyrics into the FLAC `LYRICS` tag. Cover embedding uses `metaflac`; if it is missing, the app prompts only when **Embed cover art** is enabled.
 
 ## Troubleshooting
 
 If binding expires, generate a new Tidal link from the setup screen.
 
-If `ffmpeg`, `metaflac`, or `streamrip` is missing, use the setup screen's **Install missing tools** button or run:
+If `ffmpeg` or `streamrip` is missing, use the setup screen's **Install missing tools** button or run:
 
 ```bash
-brew install ffmpeg flac
+brew install ffmpeg
 python3 -m pip install --user streamrip
+```
+
+If cover embedding is missing on Windows, use the dialog shown by **Embed cover art**. The bundled helper comes from the official FLAC downloads page:
+
+```text
+https://xiph.org/flac/download.html
 ```
 
 If a track fails with "No FLAC representation", your account, region, or that specific Tidal release may not expose a FLAC Max stream.

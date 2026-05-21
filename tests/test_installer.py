@@ -35,7 +35,7 @@ def test_build_install_commands_installs_missing_homebrew_tools():
         platform_name="Darwin",
     )
 
-    assert commands == [["brew", "install", "ffmpeg", "flac"]]
+    assert commands == [["brew", "install", "ffmpeg"]]
 
 
 def test_build_install_commands_installs_streamrip_with_python():
@@ -75,9 +75,8 @@ def test_macos_install_plan_uses_homebrew_for_audio_tools():
         )
     )
 
-    assert [step.tool for step in plan.steps] == ["streamrip", "ffmpeg", "metaflac"]
+    assert [step.tool for step in plan.steps] == ["streamrip", "ffmpeg"]
     assert ["brew", "install", "ffmpeg"] in plan.commands
-    assert ["brew", "install", "flac"] in plan.commands
 
 
 def test_macos_install_plan_without_homebrew_returns_manual_guide():
@@ -92,6 +91,19 @@ def test_macos_install_plan_without_homebrew_returns_manual_guide():
     assert [step.tool for step in plan.steps] == []
     assert plan.manual_guides[0].tool == "homebrew"
     assert plan.manual_guides[0].manual_command == "install homebrew"
+
+
+def test_macos_missing_only_metaflac_does_not_block_core_install():
+    plan = build_install_plan(
+        environment(
+            "Darwin",
+            {"streamrip": True, "ffmpeg": True, "metaflac": False},
+            homebrew=True,
+        )
+    )
+
+    assert plan.steps == []
+    assert plan.manual_guides == []
 
 
 def test_windows_install_plan_uses_winget_for_ffmpeg():
@@ -136,13 +148,15 @@ def test_windows_missing_metaflac_offers_bundled_flac_option():
 def test_extract_bundled_flac_extracts_zip(tmp_path):
     zip_path = tmp_path / "flac.zip"
     with zipfile.ZipFile(zip_path, "w") as archive:
-        archive.writestr("metaflac.exe", "fake")
+        archive.writestr("flac-1.5.0-win/Win64/metaflac.exe", "fake")
+        archive.writestr("flac-1.5.0-win/Win64/flac.exe", "flac")
     target = tmp_path / "tools"
 
     result = extract_bundled_flac(zip_path=zip_path, target_dir=target)
 
     assert result["ok"] is True
     assert (target / "metaflac.exe").read_text() == "fake"
+    assert (target / "flac.exe").read_text() == "flac"
 
 
 def test_extract_bundled_flac_missing_zip_returns_guide(tmp_path):
