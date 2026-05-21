@@ -77,17 +77,19 @@
                 <button id="pickFolder" type="button" class="secondary-button" data-i18n="choose">Choose</button>
               </span>
             </label>
-            <label class="toggle">
-              <input id="embedCovers" type="checkbox" checked />
-              <span data-i18n="embedCover">Embed cover art</span>
-            </label>
-            <label class="toggle">
-              <input id="embedLyrics" type="checkbox" checked />
-              <span data-i18n="embedLyrics">Embed lyrics</span>
-            </label>
+            <div class="toggle-row">
+              <label class="toggle">
+                <input id="embedCovers" type="checkbox" checked />
+                <span data-i18n="embedCover">Embed cover art</span>
+              </label>
+              <label class="toggle">
+                <input id="embedLyrics" type="checkbox" checked />
+                <span data-i18n="embedLyrics">Embed lyrics</span>
+              </label>
+            </div>
           </div>
           <div class="button-row">
-            <button id="previewButton" class="secondary-button" data-i18n="previewUrls">Preview URLs</button>
+            <button id="previewButton" class="secondary-button" data-i18n="previewUrls">Parse preview</button>
             <button id="downloadButton" class="primary-button" data-i18n="startDownload">Start download</button>
             <button id="settingsButton" type="button" class="icon-button" data-i18n-title="downloadSettings" aria-label="Download settings">
               <img src="/static/settings.png" alt="" />

@@ -102,6 +102,7 @@ const copy = {
     installingTools: "Installing missing tools...",
     installComplete: "Tool installation complete. Rechecking environment...",
     installFailed: "Tool installation failed.",
+    toolsReady: "Core tools are ready.",
     notFound: "not found",
     download: "Download",
     pasteUrls: "Paste Tidal URLs",
@@ -127,7 +128,7 @@ const copy = {
     strategySkip: "Skip",
     strategyOverwrite: "Overwrite",
     strategyKeepBoth: "Keep both",
-    previewUrls: "Preview URLs",
+    previewUrls: "Parse preview",
     startDownload: "Start download",
     queue: "Queue",
     sessionEvents: "Session events",
@@ -198,6 +199,7 @@ const copy = {
     installingTools: "正在安装缺失工具...",
     installComplete: "工具安装完成，正在重新检查环境...",
     installFailed: "工具安装失败。",
+    toolsReady: "核心工具已就绪。",
     notFound: "未找到",
     download: "下载",
     pasteUrls: "粘贴 Tidal 链接",
@@ -223,7 +225,7 @@ const copy = {
     strategySkip: "跳过",
     strategyOverwrite: "覆盖",
     strategyKeepBoth: "保留两个",
-    previewUrls: "预览链接",
+    previewUrls: "解析预览",
     startDownload: "开始下载",
     queue: "队列",
     sessionEvents: "会话事件",
@@ -354,7 +356,7 @@ function renderChecks() {
       required: true,
     }),
   ].join("");
-  els.installToolsButton.classList.toggle("hidden", missingInstallableTools().length === 0);
+  els.installToolsButton.classList.remove("hidden");
 }
 
 function renderMode() {
@@ -716,6 +718,11 @@ function addInstallLog(line, command = "", url = "") {
 }
 
 async function installMissingTools() {
+  if (missingInstallableTools().length === 0) {
+    showToast(t("toolsReady"), "success", 2200);
+    await refreshSetup();
+    return;
+  }
   els.installToolsButton.disabled = true;
   els.installLog.innerHTML = "";
   addInstallLog(t("installingTools"));

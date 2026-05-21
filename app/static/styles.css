@@ -452,7 +452,7 @@ textarea {
 
 .controls {
   display: grid;
-  grid-template-columns: 1fr 160px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
   margin-bottom: 18px;
 }
@@ -508,6 +508,13 @@ select {
 .toggle {
   grid-template-columns: 18px 1fr;
   align-items: center;
+}
+
+.toggle-row {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .output-head {
