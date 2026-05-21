@@ -9,8 +9,32 @@ import threading
 import uuid
 from typing import Callable
 
+from .environment import EnvironmentInfo
+from .environment import detect_environment
+
 
 InstallRunner = Callable[[list[str], Callable[[str], None]], int]
+
+
+@dataclass
+class InstallStep:
+    tool: str
+    label: str
+    command: list[str] | None
+    required: bool
+    manual_command: str | None = None
+    kind: str = "command"
+
+
+@dataclass
+class InstallPlan:
+    steps: list[InstallStep]
+    manual_guides: list[InstallStep] = field(default_factory=list)
+    bundled_options: list[InstallStep] = field(default_factory=list)
+
+    @property
+    def commands(self) -> list[list[str]]:
+        return [step.command for step in self.steps if step.command]
 
 
 @dataclass
@@ -42,6 +66,122 @@ def build_install_commands(tools: dict[str, bool], platform_name: str | None = N
     if not tools.get("streamrip", False):
         commands.append(["python3", "-m", "pip", "install", "--user", "streamrip"])
     return commands
+
+
+def build_install_plan(environment: EnvironmentInfo | dict) -> InstallPlan:
+    if isinstance(environment, EnvironmentInfo):
+        env = environment.to_dict()
+    else:
+        env = environment
+
+    system = env["platform"]["system"]
+    tools = env["tools"]
+    managers = env.get("package_managers", {})
+    commands = env.get("manual_commands", {})
+    steps: list[InstallStep] = []
+    manual_guides: list[InstallStep] = []
+    bundled_options: list[InstallStep] = []
+
+    def missing(tool: str) -> bool:
+        info = tools[tool]
+        return not (info["ok"] if isinstance(info, dict) else info.ok)
+
+    if system == "Darwin":
+        homebrew_ok = managers.get("homebrew", {}).get("ok", False)
+        if not homebrew_ok and (missing("ffmpeg") or missing("metaflac")):
+            manual_guides.append(
+                InstallStep(
+                    tool="homebrew",
+                    label="Install Homebrew",
+                    command=None,
+                    required=True,
+                    manual_command=commands.get("homebrew"),
+                    kind="manual",
+                )
+            )
+        if missing("streamrip"):
+            steps.append(
+                InstallStep(
+                    tool="streamrip",
+                    label="Install streamrip",
+                    command=["python3", "-m", "pip", "install", "--user", "streamrip"],
+                    required=True,
+                    manual_command=commands.get("streamrip"),
+                )
+            )
+        if homebrew_ok and missing("ffmpeg"):
+            steps.append(
+                InstallStep(
+                    tool="ffmpeg",
+                    label="Install ffmpeg",
+                    command=["brew", "install", "ffmpeg"],
+                    required=True,
+                    manual_command=commands.get("ffmpeg"),
+                )
+            )
+        if homebrew_ok and missing("metaflac"):
+            steps.append(
+                InstallStep(
+                    tool="metaflac",
+                    label="Install FLAC tools",
+                    command=["brew", "install", "flac"],
+                    required=False,
+                    manual_command=commands.get("metaflac"),
+                )
+            )
+    elif system == "Windows":
+        if missing("streamrip"):
+            steps.append(
+                InstallStep(
+                    tool="streamrip",
+                    label="Install streamrip",
+                    command=["python", "-m", "pip", "install", "--user", "streamrip"],
+                    required=True,
+                    manual_command=commands.get("streamrip"),
+                )
+            )
+        winget_ok = managers.get("winget", {}).get("ok", False)
+        if missing("ffmpeg") and winget_ok:
+            steps.append(
+                InstallStep(
+                    tool="ffmpeg",
+                    label="Install ffmpeg",
+                    command=[
+                        "winget",
+                        "install",
+                        "--id",
+                        "Gyan.FFmpeg",
+                        "-e",
+                        "--accept-package-agreements",
+                        "--accept-source-agreements",
+                    ],
+                    required=True,
+                    manual_command=commands.get("ffmpeg"),
+                )
+            )
+        elif missing("ffmpeg"):
+            manual_guides.append(
+                InstallStep(
+                    tool="ffmpeg",
+                    label="Install ffmpeg manually",
+                    command=None,
+                    required=True,
+                    manual_command=commands.get("ffmpeg"),
+                    kind="manual",
+                )
+            )
+        if missing("metaflac"):
+            bundled_options.append(
+                InstallStep(
+                    tool="metaflac",
+                    label="Use bundled FLAC tools",
+                    command=None,
+                    required=False,
+                    manual_command=commands.get("metaflac"),
+                    kind="bundled_flac",
+                )
+            )
+    return InstallPlan(steps=steps, manual_guides=manual_guides, bundled_options=bundled_options)
 
 
 def subprocess_runner(command: list[str], on_line: Callable[[str], None]) -> int:
