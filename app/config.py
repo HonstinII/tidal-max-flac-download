@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
-import shutil
 
+from .environment import detect_environment
+from .environment import tool_status as environment_tool_status
 from .tidal_config import read_tidal_auth
 
 
@@ -26,21 +27,20 @@ def default_config() -> AppConfig:
 
 
 def tool_status() -> dict[str, bool]:
-    streamrip_venv = Path.home() / "Applications/streamrip-dev/bin/rip"
-    return {
-        "streamrip": shutil.which("rip") is not None
-        or shutil.which("streamrip") is not None
-        or streamrip_venv.exists(),
-        "ffmpeg": shutil.which("ffmpeg") is not None,
-        "metaflac": shutil.which("metaflac") is not None,
-    }
+    return environment_tool_status()
 
 
 def setup_status() -> dict:
     config = default_config()
     tidal_auth = read_tidal_auth(config.streamrip_config)
+    environment = detect_environment().to_dict()
     return {
         "tools": tool_status(),
+        "platform": environment["platform"],
+        "tools_detail": environment["tools"],
+        "package_managers": environment["package_managers"],
+        "manual_commands": environment["manual_commands"],
+        "search_paths": environment["search_paths"],
         "streamrip_config": {
             "path": str(config.streamrip_config),
             "exists": config.streamrip_config.exists(),

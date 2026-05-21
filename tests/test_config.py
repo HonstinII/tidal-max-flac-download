@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.config import default_config, streamrip_config_path, tool_status
+from app.config import default_config, setup_status, streamrip_config_path, tool_status
 
 
 def test_default_output_directory_uses_music_streamrip():
@@ -16,9 +16,33 @@ def test_streamrip_config_path_uses_macos_application_support():
 
 
 def test_tool_status_reports_boolean_values(monkeypatch):
-    def fake_which(name):
-        return "/usr/bin/tool" if name in {"rip", "ffmpeg"} else None
+    def fake_detect_environment(platform_name=None):
+        class Environment:
+            tools = {
+                "streamrip": type("Tool", (), {"ok": True})(),
+                "ffmpeg": type("Tool", (), {"ok": True})(),
+                "metaflac": type("Tool", (), {"ok": False})(),
+            }
 
-    monkeypatch.setattr("app.config.shutil.which", fake_which)
+        return Environment()
+
+    monkeypatch.setattr("app.environment.detect_environment", fake_detect_environment)
 
     assert tool_status() == {"streamrip": True, "ffmpeg": True, "metaflac": False}
+
+
+def test_setup_status_includes_rich_environment(monkeypatch):
+    class Auth:
+        bound = False
+        user_id = None
+        country_code = None
+        token_expiry = None
+
+    monkeypatch.setattr("app.config.read_tidal_auth", lambda path: Auth())
+    status = setup_status()
+
+    assert "platform" in status
+    assert "tools_detail" in status
+    assert "package_managers" in status
+    assert "manual_commands" in status
+    assert set(status["tools"]) == {"streamrip", "ffmpeg", "metaflac"}
