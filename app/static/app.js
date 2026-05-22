@@ -11,7 +11,7 @@ const state = {
   previewTimer: null,
   previewAbort: null,
   audioQuality: localStorage.getItem("audioQuality") || "max",
-  queueCleared: false,
+  clearedQueueBefore: 0,
 };
 
 const els = {
@@ -648,7 +648,6 @@ async function startDownload() {
     return;
   }
   els.downloadButton.disabled = true;
-  state.queueCleared = false;
   els.openFolder.classList.add("hidden");
   els.events.innerHTML = "";
   const response = await fetch("/api/queue", {
@@ -706,16 +705,12 @@ function listenToRunEvents(runId) {
 }
 
 async function refreshQueue() {
-  if (state.queueCleared) return;
   const response = await fetch("/api/queue");
   const data = await response.json();
-  let items = data.items || [];
+  let items = (data.items || []).filter((item) => Number(item.created_at || 0) >= state.clearedQueueBefore);
   if (!state.activeRunId && items.length) {
     state.activeRunId = items[items.length - 1].run_id;
     if (els.jobStatus) els.jobStatus.textContent = `Run ${state.activeRunId.slice(0, 8)}`;
-  }
-  if (state.activeRunId) {
-    items = items.filter((item) => item.run_id === state.activeRunId);
   }
   renderQueue(items);
 }
@@ -726,7 +721,7 @@ function clearQueueView() {
     state.eventSource = null;
   }
   state.activeRunId = null;
-  state.queueCleared = true;
+  state.clearedQueueBefore = Date.now() / 1000;
   els.queueTable.innerHTML = "";
   els.events.innerHTML = "";
   els.openFolder.classList.add("hidden");

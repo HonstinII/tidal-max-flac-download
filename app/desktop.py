@@ -7,28 +7,15 @@ import os
 
 import uvicorn
 
+from app.environment import prime_runtime_path
 from app.main import app as fastapi_app
 
 
 HOST = "127.0.0.1"
 TITLE = "Tidal Max FLAC Studio"
-TOOL_PATHS = (
-    "/opt/homebrew/bin",
-    "/usr/local/bin",
-    "/usr/bin",
-    "/bin",
-    "/usr/sbin",
-    "/sbin",
-)
-
 
 def prime_desktop_environment() -> None:
-    current_paths = os.environ.get("PATH", "").split(os.pathsep)
-    merged_paths = [path for path in current_paths if path]
-    for path in TOOL_PATHS:
-        if path not in merged_paths:
-            merged_paths.append(path)
-    os.environ["PATH"] = os.pathsep.join(merged_paths)
+    prime_runtime_path()
 
 
 def find_free_port() -> int:

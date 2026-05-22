@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import json
+import os
 import platform
 import queue
 import shutil
 import subprocess
+import sys
 import threading
 import uuid
 import zipfile
@@ -15,6 +17,7 @@ from typing import Callable
 from .environment import EnvironmentInfo
 from .environment import detect_environment
 from .environment import managed_tools_dir
+from .environment import prime_runtime_path
 
 
 InstallRunner = Callable[[list[str], Callable[[str], None]], int]
@@ -200,7 +203,15 @@ def subprocess_runner(command: list[str], on_line: Callable[[str], None]) -> int
     return process.wait()
 
 
-BUNDLED_FLAC_ZIP = Path(__file__).resolve().parent / "tools/windows/flac.zip"
+def bundled_resource_path(relative_path: str) -> Path:
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    candidate = base / relative_path
+    if candidate.exists():
+        return candidate
+    return Path(__file__).resolve().parent / relative_path
+
+
+BUNDLED_FLAC_ZIP = bundled_resource_path("tools/windows/flac.zip")
 
 
 def extract_bundled_flac(
@@ -227,7 +238,16 @@ def extract_bundled_flac(
                 if source.exists():
                     shutil.copy2(source, target_dir / filename)
             break
+    _prepend_path(target_dir)
+    prime_runtime_path("Windows")
     return {"ok": True, "message": "Bundled FLAC tools extracted.", "target": str(target_dir)}
+
+
+def _prepend_path(path: Path) -> None:
+    value = str(path)
+    paths = [item for item in os.environ.get("PATH", "").split(os.pathsep) if item]
+    if value not in paths:
+        os.environ["PATH"] = os.pathsep.join([value, *paths])
 
 
 class InstallJobManager:

@@ -169,6 +169,18 @@ def test_extract_bundled_flac_extracts_zip(tmp_path):
     assert (target / "flac.exe").read_text() == "flac"
 
 
+def test_extract_bundled_flac_updates_runtime_path(monkeypatch, tmp_path):
+    zip_path = tmp_path / "flac.zip"
+    with zipfile.ZipFile(zip_path, "w") as archive:
+        archive.writestr("flac-1.5.0-win/Win64/metaflac.exe", "fake")
+    target = tmp_path / "tools"
+    monkeypatch.setenv("PATH", "C:\\Windows\\System32")
+
+    extract_bundled_flac(zip_path=zip_path, target_dir=target)
+
+    assert str(target) in __import__("os").environ["PATH"].split(__import__("os").pathsep)
+
+
 def test_extract_bundled_flac_missing_zip_returns_guide(tmp_path):
     result = extract_bundled_flac(zip_path=tmp_path / "missing.zip", target_dir=tmp_path / "tools")
 

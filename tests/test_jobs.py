@@ -339,7 +339,36 @@ def test_queue_worker_high_reports_unavailable_when_lossless_and_high_are_unauth
 
     item = db.list_queue_items(run["id"])[0]
     assert item["status"] == "failed"
-    assert item["error"] == "当前歌曲的 High 品质不可用，请切换 Max 下载。"
+    assert item["error"] == "该歌曲没有开放给当前账号/地区/版本，请更换歌曲下载。"
+
+
+def test_queue_worker_max_reports_unavailable_when_hi_res_and_lossless_are_unauthorized(monkeypatch, tmp_path):
+    db = AppDatabase(tmp_path / "queue.db")
+    db.initialize()
+
+    class Response:
+        status_code = 401
+
+    class Api(FakeApi):
+        def get(self, path, params=None):
+            raise requests.HTTPError("401 Client Error: Unauthorized", response=Response())
+
+    manager = DownloadJobManager(
+        database=db,
+        auth_reader=lambda path: Auth(),
+        api_factory=Api,
+        downloader=lambda *args, **kwargs: None,
+    )
+    run = manager.create_run_from_urls(
+        ["https://tidal.com/track/1"],
+        JobOptions(output_dir=tmp_path, embed_covers=False, embed_lyrics=False, audio_quality="max"),
+    )
+
+    manager._run_queue(run["id"])
+
+    item = db.list_queue_items(run["id"])[0]
+    assert item["status"] == "failed"
+    assert item["error"] == "该歌曲没有开放给当前账号/地区/版本，请更换歌曲下载。"
 
 
 def test_queue_worker_marks_lossy_available(monkeypatch, tmp_path):

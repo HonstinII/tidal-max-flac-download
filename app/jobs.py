@@ -358,8 +358,8 @@ class DownloadJobManager:
                 errors.append(f"{quality}: {error}")
         if lossy_error:
             raise LossyAudioAvailable(str(lossy_error))
-        if audio_quality == "high" and len(unauthorized_qualities) == len(qualities):
-            raise RuntimeError("当前歌曲的 High 品质不可用，请切换 Max 下载。")
+        if len(unauthorized_qualities) == len(qualities):
+            raise RuntimeError("该歌曲没有开放给当前账号/地区/版本，请更换歌曲下载。")
         raise RuntimeError("No FLAC playback manifest available. " + " | ".join(errors))
 
     def pause_run(self, run_id: str) -> dict | None:
