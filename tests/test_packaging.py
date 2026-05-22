@@ -23,3 +23,13 @@ def test_package_scripts_use_product_name_and_icons():
     assert '--name "Tidal Max FLAC Studio"' in windows_script
     assert '--icon "assets/app_icon.ico"' in windows_script
     assert '--add-data "app/tools;app/tools"' in windows_script
+
+
+def test_cover_tool_modal_has_manual_recovery_actions():
+    html = (ROOT / "app" / "static" / "index.html").read_text()
+    js = (ROOT / "app" / "static" / "app.js").read_text()
+
+    assert "manualCoverToolLink" in html
+    assert "https://xiph.org/flac/download.html" in html
+    assert "recheckCoverToolButton" in html
+    assert "coverToolManualCopy" in js

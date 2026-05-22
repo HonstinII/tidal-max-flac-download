@@ -3,6 +3,17 @@ import subprocess
 from pathlib import Path
 
 
+def existing_folder_or_parent(path: Path) -> Path:
+    candidate = path.expanduser()
+    if candidate.is_file():
+        candidate = candidate.parent
+    while not candidate.exists() and candidate != candidate.parent:
+        candidate = candidate.parent
+    if candidate.exists() and candidate.is_dir():
+        return candidate
+    return Path.home()
+
+
 def open_folder_command(path: Path, system: str | None = None) -> list[str]:
     system = system or platform.system()
     if system == "Darwin":
@@ -33,6 +44,7 @@ def reveal_file(path: Path) -> None:
 
 def pick_folder(initial: Path) -> Path | None:
     system = platform.system()
+    initial = existing_folder_or_parent(initial)
     if system == "Darwin":
         script = (
             'POSIX path of (choose folder with prompt "Choose output folder" '

@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+import requests
 
 from app.main import app
 from app.tidal_api import TrackItem
@@ -79,3 +80,28 @@ def test_preview_invalid_url_returns_error(monkeypatch):
     assert data["items"] == []
     assert data["errors"][0]["url"] == "https://example.com/nope"
     assert "Unsupported Tidal URL" in data["errors"][0]["message"]
+
+
+def test_preview_unauthorized_maps_to_rebind_message(monkeypatch):
+    class Response:
+        status_code = 401
+
+    class FakeApi:
+        def __init__(self, auth):
+            pass
+
+        def resolve(self, ref):
+            raise requests.HTTPError(
+                "401 Client Error: Unauthorized for url: https://api.tidalhifi.com/v1/albums/9",
+                response=Response(),
+            )
+
+    monkeypatch.setattr("app.main.read_tidal_auth", lambda path: Auth())
+    monkeypatch.setattr("app.main.TidalApi", FakeApi)
+
+    client = TestClient(app)
+    response = client.post("/api/preview", json={"urls": ["https://tidal.com/album/9/u"]})
+
+    data = response.json()
+    assert data["items"] == []
+    assert data["errors"][0]["message"] == "402, Tidal 授权已失效，请重新绑定账号。"

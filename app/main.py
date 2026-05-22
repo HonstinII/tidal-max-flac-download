@@ -105,6 +105,14 @@ def preview_track(track: TrackItem) -> dict:
     }
 
 
+def preview_error_message(error: Exception) -> str:
+    status_code = getattr(getattr(error, "response", None), "status_code", None)
+    raw = str(error)
+    if status_code == 401 or ("401" in raw and "Unauthorized" in raw):
+        return "402, Tidal 授权已失效，请重新绑定账号。"
+    return raw
+
+
 @app.post("/api/preview")
 def preview_urls(request: PreviewRequest):
     auth = read_tidal_auth(default_config().streamrip_config)
@@ -129,7 +137,7 @@ def preview_urls(request: PreviewRequest):
                 }
             )
         except Exception as error:
-            errors.append({"url": url, "message": str(error)})
+            errors.append({"url": url, "message": preview_error_message(error)})
     return {"items": items, "errors": errors}
 
 

@@ -61,6 +61,7 @@ const els = {
   jobStatus: document.querySelector("#jobStatus"),
   coverToolModal: document.querySelector("#coverToolModal"),
   installCoverToolButton: document.querySelector("#installCoverToolButton"),
+  recheckCoverToolButton: document.querySelector("#recheckCoverToolButton"),
   cancelCoverToolButton: document.querySelector("#cancelCoverToolButton"),
   toast: document.querySelector("#toast"),
 };
@@ -95,8 +96,10 @@ const copy = {
     optionalCoverTool: "Optional cover tool",
     coverToolMissingTitle: "Cover embedding needs metaflac",
     coverToolMissingCopy: "Downloads can continue without this tool, but cover art cannot be embedded into FLAC files.",
+    coverToolManualCopy: "If automatic setup fails, download the Windows FLAC tools from the official page, install or unzip them, then recheck.",
     officialSource: "Official source",
     installCoverTool: "Install cover tool",
+    manualDownload: "Manual download",
     cancelCoverTool: "Cancel",
     coverToolInstalling: "Installing cover embedding tool...",
     coverToolInstalled: "Cover tool is ready. Cover embedding is enabled.",
@@ -204,8 +207,10 @@ const copy = {
     optionalCoverTool: "可选封面工具",
     coverToolMissingTitle: "嵌入封面需要 metaflac",
     coverToolMissingCopy: "没有这个工具也可以继续下载，但无法把封面写入 FLAC 文件。",
+    coverToolManualCopy: "如果自动安装失败，请从官方页面下载 Windows FLAC 工具，安装或解压后再重新检查。",
     officialSource: "官方来源",
     installCoverTool: "安装封面工具",
+    manualDownload: "手动下载",
     cancelCoverTool: "取消",
     coverToolInstalling: "正在安装封面嵌入工具...",
     coverToolInstalled: "封面工具已就绪，已启用嵌入封面。",
@@ -968,6 +973,14 @@ els.queueTable.addEventListener("click", (event) => {
 });
 els.installToolsButton.addEventListener("click", installMissingTools);
 els.installCoverToolButton.addEventListener("click", useBundledFlac);
+els.recheckCoverToolButton.addEventListener("click", async () => {
+  await refreshSetup();
+  if (state.setup?.tools?.metaflac) {
+    els.embedCovers.checked = true;
+    hideCoverToolModal();
+    showToast(t("coverToolInstalled"), "success", 2500);
+  }
+});
 els.cancelCoverToolButton.addEventListener("click", () => {
   els.embedCovers.checked = false;
   hideCoverToolModal();
