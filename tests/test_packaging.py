@@ -33,3 +33,27 @@ def test_cover_tool_modal_has_manual_recovery_actions():
     assert "https://xiph.org/flac/download.html" in html
     assert "recheckCoverToolButton" in html
     assert "coverToolManualCopy" in js
+
+
+def test_settings_modal_groups_advanced_controls():
+    html = (ROOT / "app" / "static" / "index.html").read_text()
+    css = (ROOT / "app" / "static" / "styles.css").read_text()
+    js = (ROOT / "app" / "static" / "app.js").read_text()
+
+    assert "settings-row wide-control" in html
+    assert "settings-select-row" in html
+    assert "settings-select-control" in html
+    assert "native-hidden-select" in html
+    assert "compact-dropdown" in html
+    assert "data-select-target=\"lyricsMode\"" in html
+    assert "data-select-target=\"existingStrategy\"" in html
+    assert html.index('id="concurrency"') < html.index('id="writeLrc"')
+    assert html.index('id="lyricsMode"') < html.index('id="existingStrategy"')
+    assert "data-tooltip-key=\"concurrencyHelp\"" in html
+    assert ".info-dot::after" in css
+    assert ".compact-select-menu" in css
+    assert "align-items: start" in css
+    assert "data-tooltip" in css
+    assert "dataset.tooltip" in js
+    assert "syncCustomSelects" in js
+    assert "include_transient=true" in js

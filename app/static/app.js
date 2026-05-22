@@ -131,8 +131,11 @@ const copy = {
     qualityHighDetail: "16-bit, 44.1 kHz",
     lyricsMode: "Lyrics mode",
     lyricsAuto: "Auto",
+    lyricsAutoDetail: "Use synced lyrics when Tidal provides them.",
     lyricsSynced: "Synced",
+    lyricsSyncedDetail: "Prefer timestamped lyrics for compatible players.",
     lyricsPlain: "Plain",
+    lyricsPlainDetail: "Write regular text lyrics without timing.",
     writeLrc: "Write .lrc file",
     downloadSettings: "Download settings",
     metadataSettings: "Metadata and files",
@@ -142,8 +145,11 @@ const copy = {
     singleFilenameTemplate: "Single file template",
     existingStrategy: "Existing files",
     strategySkip: "Skip",
+    strategySkipDetail: "Keep existing files and skip duplicates.",
     strategyOverwrite: "Overwrite",
+    strategyOverwriteDetail: "Replace files with the new download.",
     strategyKeepBoth: "Keep both",
+    strategyKeepBothDetail: "Save a new copy when a file exists.",
     lossyConfirm: "Due to Tidal's official restrictions, this song's HIGH format can only be downloaded as AAC. Continue?",
     lossyAvailableDetail: "Tidal only exposed an AAC stream for this track/account at High quality. Continue with AAC to download an .m4a file.",
     existingFileSkipped: "This folder already has this song. Choose another output folder or change the download setting.",
@@ -242,8 +248,11 @@ const copy = {
     qualityHighDetail: "16-bit, 44.1 kHz",
     lyricsMode: "歌词模式",
     lyricsAuto: "自动",
+    lyricsAutoDetail: "Tidal 提供同步歌词时优先使用。",
     lyricsSynced: "同步歌词",
+    lyricsSyncedDetail: "优先写入带时间戳的歌词。",
     lyricsPlain: "普通歌词",
+    lyricsPlainDetail: "写入不带时间戳的文本歌词。",
     writeLrc: "写出 .lrc 文件",
     downloadSettings: "下载设置",
     metadataSettings: "元数据与文件",
@@ -253,8 +262,11 @@ const copy = {
     singleFilenameTemplate: "单曲文件名模板",
     existingStrategy: "已有文件",
     strategySkip: "跳过",
+    strategySkipDetail: "保留已有文件，跳过重复歌曲。",
     strategyOverwrite: "覆盖",
+    strategyOverwriteDetail: "用本次下载替换已有文件。",
     strategyKeepBoth: "保留两个",
+    strategyKeepBothDetail: "已有文件时另存一个新副本。",
     lossyConfirm: "受 Tidal 官方限制，此歌曲 HIGH格式 只能以 AAC 格式下载，是否继续？",
     lossyAvailableDetail: "当前歌曲/账号在 High 品质下只返回 AAC 流。继续后会下载 .m4a 文件。",
     existingFileSkipped: "该目录已存在该歌曲，请选择其他目录下载或更改下载设置。",
@@ -316,11 +328,15 @@ function applyLanguage() {
     node.setAttribute("title", value);
     node.setAttribute("aria-label", value);
   });
+  document.querySelectorAll("[data-tooltip-key]").forEach((node) => {
+    node.dataset.tooltip = t(node.dataset.tooltipKey);
+  });
   els.langEn.classList.toggle("active", state.language === "en");
   els.langZh.classList.toggle("active", state.language === "zh");
   if (els.audioQualityButton) {
     els.audioQualityLabel.textContent = t(state.audioQuality === "high" ? "qualityHigh" : "qualityMax");
   }
+  syncCustomSelects();
   if (state.setup) {
     renderChecks();
     renderMode();
@@ -710,12 +726,17 @@ function listenToRunEvents(runId) {
 }
 
 async function refreshQueue() {
-  const response = await fetch("/api/queue");
+  const response = await fetch(`/api/queue${state.activeRunId ? "?include_transient=true" : ""}`);
   const data = await response.json();
   let items = (data.items || []).filter((item) => Number(item.created_at || 0) >= state.clearedQueueBefore);
-  if (!state.activeRunId && items.length) {
-    state.activeRunId = items[items.length - 1].run_id;
-    if (els.jobStatus) els.jobStatus.textContent = `Run ${state.activeRunId.slice(0, 8)}`;
+  if (state.activeRunId) {
+    const byId = new Map();
+    items
+      .filter((item) => item.status === "complete" || item.run_id === state.activeRunId)
+      .forEach((item) => byId.set(item.id, item));
+    items = [...byId.values()];
+  } else {
+    items = items.filter((item) => item.status === "complete");
   }
   renderQueue(items);
 }
@@ -924,6 +945,57 @@ function showSettingsModal() {
 
 function hideSettingsModal() {
   els.settingsModal.classList.add("hidden");
+  closeCustomSelectMenus();
+}
+
+function selectLabelKey(selectId, value) {
+  const keys = {
+    lyricsMode: {
+      auto: "lyricsAuto",
+      synced: "lyricsSynced",
+      plain: "lyricsPlain",
+    },
+    existingStrategy: {
+      skip: "strategySkip",
+      overwrite: "strategyOverwrite",
+      keep_both: "strategyKeepBoth",
+    },
+  };
+  return keys[selectId]?.[value] || "";
+}
+
+function customSelectShells() {
+  return [...document.querySelectorAll("[data-select-shell]")];
+}
+
+function syncCustomSelects() {
+  customSelectShells().forEach((shell) => {
+    const select = els[shell.dataset.selectTarget];
+    if (!select) return;
+    const label = shell.querySelector("[data-select-label]");
+    const key = selectLabelKey(select.id, select.value);
+    if (label) label.textContent = key ? t(key) : select.value;
+    shell.querySelectorAll("[data-select-value]").forEach((button) => {
+      button.setAttribute("aria-selected", String(button.dataset.selectValue === select.value));
+    });
+  });
+}
+
+function closeCustomSelectMenus(exceptShell = null) {
+  customSelectShells().forEach((shell) => {
+    if (shell === exceptShell) return;
+    shell.querySelector(".quality-menu")?.classList.add("hidden");
+    shell.querySelector(".quality-button")?.setAttribute("aria-expanded", "false");
+  });
+}
+
+function toggleCustomSelect(shell) {
+  const menu = shell.querySelector(".quality-menu");
+  const button = shell.querySelector(".quality-button");
+  const isOpen = !menu.classList.contains("hidden");
+  closeCustomSelectMenus(shell);
+  menu.classList.toggle("hidden", isOpen);
+  button.setAttribute("aria-expanded", String(!isOpen));
 }
 
 async function unbindTidal() {
@@ -960,6 +1032,20 @@ els.audioQualityMenu.addEventListener("click", (event) => {
 });
 els.settingsModal.addEventListener("click", (event) => {
   if (event.target === els.settingsModal) hideSettingsModal();
+  const selectButton = event.target.closest("[data-select-shell] .quality-button");
+  if (selectButton) {
+    toggleCustomSelect(selectButton.closest("[data-select-shell]"));
+    return;
+  }
+  const selectOption = event.target.closest("[data-select-value]");
+  if (selectOption) {
+    const shell = selectOption.closest("[data-select-shell]");
+    const select = els[shell.dataset.selectTarget];
+    select.value = selectOption.dataset.selectValue;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    syncCustomSelects();
+    closeCustomSelectMenus();
+  }
 });
 els.pauseRun.addEventListener("click", pauseRun);
 els.resumeRun.addEventListener("click", resumeRun);
@@ -1002,12 +1088,16 @@ document.addEventListener("click", (event) => {
     els.audioQualityMenu.classList.add("hidden");
     els.audioQualityButton.setAttribute("aria-expanded", "false");
   }
+  if (!event.target.closest("[data-select-shell]")) {
+    closeCustomSelectMenus();
+  }
 });
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
     closeAccountMenu();
     els.audioQualityMenu.classList.add("hidden");
     els.audioQualityButton.setAttribute("aria-expanded", "false");
+    closeCustomSelectMenus();
   }
 });
 els.langEn.addEventListener("click", () => {

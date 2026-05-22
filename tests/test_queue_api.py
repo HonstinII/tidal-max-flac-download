@@ -67,7 +67,36 @@ def test_queue_api_creates_run_and_items(monkeypatch, tmp_path):
     assert data["run"]["options"]["album_template"] == "{album_artist}/{album} ({year})"
 
 
-def test_queue_api_lists_items(monkeypatch, tmp_path):
+def test_queue_api_lists_only_completed_items_by_default(monkeypatch, tmp_path):
+    db = AppDatabase(tmp_path / "queue.db")
+    db.initialize()
+    db.create_run("run-1", "queued", "/tmp/music", {})
+    db.create_queue_item(
+        "item-1",
+        "run-1",
+        "https://tidal.com/track/1/u",
+        make_track().__dict__,
+        status="ready",
+    )
+    db.create_queue_item(
+        "item-2",
+        "run-1",
+        "https://tidal.com/track/2/u",
+        make_track(track_id="2", title="Done").__dict__,
+        status="complete",
+    )
+    monkeypatch.setattr("app.main.database", db)
+
+    client = TestClient(app)
+    response = client.get("/api/queue")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert [item["id"] for item in data["items"]] == ["item-2"]
+    assert data["items"][0]["artist"] == "Artist"
+
+
+def test_queue_api_can_include_transient_items(monkeypatch, tmp_path):
     db = AppDatabase(tmp_path / "queue.db")
     db.initialize()
     db.create_run("run-1", "queued", "/tmp/music", {})
@@ -81,9 +110,7 @@ def test_queue_api_lists_items(monkeypatch, tmp_path):
     monkeypatch.setattr("app.main.database", db)
 
     client = TestClient(app)
-    response = client.get("/api/queue")
+    response = client.get("/api/queue?include_transient=true")
 
     assert response.status_code == 200
-    data = response.json()
-    assert data["items"][0]["id"] == "item-1"
-    assert data["items"][0]["artist"] == "Artist"
+    assert response.json()["items"][0]["id"] == "item-1"

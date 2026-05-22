@@ -13,7 +13,7 @@ def test_pages_has_direct_release_download_buttons():
     assert "Tidal-Max-FLAC-Studio-Windows.zip" in html
     assert "releases/download/v0.3.6" in html
     assert html.index("Download for Windows") < html.index("All releases")
-    assert html.count("<svg viewBox=") >= 5
+    assert html.count("<svg viewBox=") >= 6
 
 
 def test_pages_has_language_toggle():
@@ -24,6 +24,14 @@ def test_pages_has_language_toggle():
     assert "pagesLanguage" in html
     assert "zh-CN" in html
     assert "主要功能" in html
+
+
+def test_pages_has_telegram_contact_button():
+    html = (ROOT / "docs" / "index.html").read_text()
+
+    assert "https://t.me/HonstinHui" in html
+    assert "Contact on Telegram" in html
+    assert "Telegram 联系我" in html
 
 
 def test_pages_omits_explainer_cards():

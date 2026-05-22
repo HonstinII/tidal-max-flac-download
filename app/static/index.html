@@ -161,33 +161,77 @@
         <p class="section-kicker" data-i18n="downloadSettings">Download settings</p>
         <h2 id="settingsTitle" data-i18n="metadataSettings">Metadata and files</h2>
         <div class="settings-grid">
-          <label>
-            <span class="label-row">
-              <span data-i18n="segmentConcurrency">Segment concurrency</span>
-              <span class="info-dot" data-i18n-title="concurrencyHelp" tabindex="0">!</span>
-            </span>
-            <input id="concurrency" type="number" min="1" max="24" value="10" />
-          </label>
-          <label>
-            <span data-i18n="lyricsMode">Lyrics mode</span>
-            <select id="lyricsMode">
-              <option value="auto" data-i18n="lyricsAuto">Auto</option>
-              <option value="synced" data-i18n="lyricsSynced">Synced</option>
-              <option value="plain" data-i18n="lyricsPlain">Plain</option>
-            </select>
-          </label>
-          <label class="toggle">
-            <input id="writeLrc" type="checkbox" checked />
-            <span data-i18n="writeLrc">Write .lrc file</span>
-          </label>
-          <label>
-            <span data-i18n="existingStrategy">Existing files</span>
-            <select id="existingStrategy">
-              <option value="skip" data-i18n="strategySkip">Skip</option>
-              <option value="overwrite" data-i18n="strategyOverwrite">Overwrite</option>
-              <option value="keep_both" data-i18n="strategyKeepBoth">Keep both</option>
-            </select>
-          </label>
+          <div class="settings-row wide-control">
+            <label>
+              <span class="label-row">
+                <span data-i18n="segmentConcurrency">Segment concurrency</span>
+                <span class="info-dot" data-i18n-title="concurrencyHelp" data-tooltip-key="concurrencyHelp" tabindex="0">!</span>
+              </span>
+              <input id="concurrency" type="number" min="1" max="24" value="10" />
+            </label>
+            <label class="toggle settings-inline-toggle">
+              <input id="writeLrc" type="checkbox" checked />
+              <span data-i18n="writeLrc">Write .lrc file</span>
+            </label>
+          </div>
+          <div class="settings-row settings-select-row wide-control">
+            <label class="settings-select-control">
+              <span data-i18n="lyricsMode">Lyrics mode</span>
+              <select id="lyricsMode" class="native-hidden-select">
+                <option value="auto" data-i18n="lyricsAuto">Auto</option>
+                <option value="synced" data-i18n="lyricsSynced">Synced</option>
+                <option value="plain" data-i18n="lyricsPlain">Plain</option>
+              </select>
+              <div class="quality-select compact-dropdown" data-select-shell data-select-target="lyricsMode">
+                <button type="button" class="quality-button compact-select-button" aria-haspopup="listbox" aria-expanded="false">
+                  <span data-select-label>Auto</span>
+                  <span class="quality-arrow" aria-hidden="true"></span>
+                </button>
+                <div class="quality-menu compact-select-menu hidden" role="listbox">
+                  <button type="button" data-select-value="auto" role="option">
+                    <strong data-i18n="lyricsAuto">Auto</strong>
+                    <small data-i18n="lyricsAutoDetail">Use synced lyrics when Tidal provides them.</small>
+                  </button>
+                  <button type="button" data-select-value="synced" role="option">
+                    <strong data-i18n="lyricsSynced">Synced</strong>
+                    <small data-i18n="lyricsSyncedDetail">Prefer timestamped lyrics for compatible players.</small>
+                  </button>
+                  <button type="button" data-select-value="plain" role="option">
+                    <strong data-i18n="lyricsPlain">Plain</strong>
+                    <small data-i18n="lyricsPlainDetail">Write regular text lyrics without timing.</small>
+                  </button>
+                </div>
+              </div>
+            </label>
+            <label class="settings-select-control">
+              <span data-i18n="existingStrategy">Existing files</span>
+              <select id="existingStrategy" class="native-hidden-select">
+                <option value="skip" data-i18n="strategySkip">Skip</option>
+                <option value="overwrite" data-i18n="strategyOverwrite">Overwrite</option>
+                <option value="keep_both" data-i18n="strategyKeepBoth">Keep both</option>
+              </select>
+              <div class="quality-select compact-dropdown" data-select-shell data-select-target="existingStrategy">
+                <button type="button" class="quality-button compact-select-button" aria-haspopup="listbox" aria-expanded="false">
+                  <span data-select-label>Skip</span>
+                  <span class="quality-arrow" aria-hidden="true"></span>
+                </button>
+                <div class="quality-menu compact-select-menu hidden" role="listbox">
+                  <button type="button" data-select-value="skip" role="option">
+                    <strong data-i18n="strategySkip">Skip</strong>
+                    <small data-i18n="strategySkipDetail">Keep existing files and skip duplicates.</small>
+                  </button>
+                  <button type="button" data-select-value="overwrite" role="option">
+                    <strong data-i18n="strategyOverwrite">Overwrite</strong>
+                    <small data-i18n="strategyOverwriteDetail">Replace files with the new download.</small>
+                  </button>
+                  <button type="button" data-select-value="keep_both" role="option">
+                    <strong data-i18n="strategyKeepBoth">Keep both</strong>
+                    <small data-i18n="strategyKeepBothDetail">Save a new copy when a file exists.</small>
+                  </button>
+                </div>
+              </div>
+            </label>
+          </div>
           <label class="wide-control">
             <span data-i18n="albumTemplate">Album folder template</span>
             <input id="albumTemplate" type="text" value="{album_artist}/{album} ({year})" />

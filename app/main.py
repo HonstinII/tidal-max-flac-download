@@ -184,8 +184,11 @@ def create_queue(request: QueueRequest):
 
 
 @app.get("/api/queue")
-def get_queue():
-    return {"items": database.list_queue_items()}
+def get_queue(include_transient: bool = False):
+    items = database.list_queue_items()
+    if not include_transient:
+        items = [item for item in items if item["status"] == "complete"]
+    return {"items": items}
 
 
 @app.post("/api/queue/runs/{run_id}/start")
