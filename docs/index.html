@@ -37,16 +37,35 @@
         padding: 56px 0;
       }
 
-      .eyebrow {
-        color: var(--amber);
-        font-size: 12px;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
+      .page-language {
+        position: fixed;
+        top: 22px;
+        right: 22px;
+        z-index: 10;
+        display: inline-flex;
+        border: 1px solid var(--line);
+        background: #111714;
+      }
+
+      .page-language button {
+        min-height: 38px;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        padding: 0 13px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .page-language button.active {
+        background: var(--accent);
+        color: #07110d;
       }
 
       h1 {
         max-width: 780px;
-        margin: 12px 0 18px;
+        margin: 0 0 18px;
         font-size: clamp(40px, 7vw, 82px);
         line-height: 0.95;
         letter-spacing: 0;
@@ -70,16 +89,26 @@
       }
 
       .secondary-actions {
-        margin-top: 18px;
+        margin-top: 12px;
       }
 
       a.button {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
         border: 1px solid var(--line);
         background: #111714;
         color: var(--text);
         min-height: 44px;
         padding: 11px 16px;
         text-decoration: none;
+      }
+
+      .button svg {
+        width: 17px;
+        height: 17px;
+        flex: 0 0 auto;
+        fill: currentColor;
       }
 
       a.primary {
@@ -105,6 +134,28 @@
         margin-top: 42px;
         padding-top: 18px;
         font-size: 14px;
+      }
+
+      .features {
+        border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--panel) 88%, black);
+        margin-top: 28px;
+        max-width: 780px;
+        padding: 20px;
+      }
+
+      .features h2 {
+        margin: 0 0 12px;
+        font-size: 22px;
+      }
+
+      .features ul {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+        line-height: 1.55;
       }
 
       .steps {
@@ -141,58 +192,119 @@
     </style>
   </head>
   <body>
+    <div class="page-language" aria-label="Language">
+      <button id="langEn" type="button" class="active">EN</button>
+      <button id="langZh" type="button">中文</button>
+    </div>
     <main>
-      <div class="eyebrow">Local Tidal workstation</div>
       <h1>Tidal Max FLAC Studio</h1>
-      <p class="lead">
-        A local desktop/web UI built around streamrip for personal offline listening:
-        Tidal binding, Max/Hi-Res FLAC downloads, cover embedding, lyrics
-        tagging, output folder controls, and a guided setup flow.
+      <p class="lead" data-i18n="lead">
+        Tidal Max FLAC Studio is a local Tidal download workstation built
+        around the open-source project streamrip. It brings Tidal binding,
+        download settings, cover embedding, lyrics writing, and metadata
+        cleanup into a desktop interface.
       </p>
       <div class="actions">
         <a
           class="button primary"
           href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.3.6/Tidal-Max-FLAC-Studio-macOS.zip"
-        >Download for macOS</a>
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M17.53 12.09c-.03-3.03 2.48-4.49 2.59-4.56-1.41-2.06-3.61-2.34-4.39-2.37-1.87-.19-3.65 1.1-4.6 1.1-.95 0-2.41-1.07-3.96-1.04-2.04.03-3.92 1.18-4.97 3-2.12 3.68-.54 9.13 1.52 12.11 1.01 1.46 2.21 3.1 3.79 3.04 1.52-.06 2.09-.98 3.93-.98 1.83 0 2.35.98 3.96.95 1.63-.03 2.67-1.49 3.67-2.95 1.16-1.69 1.64-3.33 1.67-3.41-.04-.02-3.18-1.22-3.21-4.89ZM14.5 3.2c.84-1.02 1.41-2.44 1.25-3.85-1.21.05-2.67.81-3.54 1.83-.78.9-1.46 2.35-1.28 3.73 1.35.1 2.73-.69 3.57-1.71Z"/>
+          </svg>
+          <span data-i18n="downloadMac">Download for macOS</span>
+        </a>
         <a
           class="button secondary-download"
           href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.3.6/Tidal-Max-FLAC-Studio-Windows.zip"
-        >Download for Windows</a>
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M1.5 4.35 10.3 3.1v8.45H1.5V4.35Zm9.8-1.39L22.5 1.35v10.2H11.3V2.96ZM1.5 12.55h8.8V21l-8.8-1.23v-7.22Zm9.8 0h11.2v10.1l-11.2-1.56v-8.54Z"/>
+          </svg>
+          <span data-i18n="downloadWindows">Download for Windows</span>
+        </a>
       </div>
+      <div class="actions secondary-actions">
+        <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download/releases">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.04 1.77 2.72 1.26 3.38.96.11-.75.41-1.26.74-1.55-2.57-.29-5.27-1.28-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.17 1.19.92-.26 1.91-.38 2.89-.39.98.01 1.97.13 2.89.39 2.2-1.5 3.17-1.19 3.17-1.19.63 1.59.23 2.77.11 3.06.74.81 1.19 1.85 1.19 3.11 0 4.45-2.71 5.43-5.29 5.72.42.36.79 1.07.79 2.16v3.2c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"/>
+          </svg>
+          <span data-i18n="allReleases">All releases</span>
+        </a>
+        <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.04 1.77 2.72 1.26 3.38.96.11-.75.41-1.26.74-1.55-2.57-.29-5.27-1.28-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.17 1.19.92-.26 1.91-.38 2.89-.39.98.01 1.97.13 2.89.39 2.2-1.5 3.17-1.19 3.17-1.19.63 1.59.23 2.77.11 3.06.74.81 1.19 1.85 1.19 3.11 0 4.45-2.71 5.43-5.29 5.72.42.36.79 1.07.79 2.16v3.2c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"/>
+          </svg>
+          <span data-i18n="openRepo">Open GitHub repository</span>
+        </a>
+        <a class="button" href="https://github.com/nathom/streamrip">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.04 1.77 2.72 1.26 3.38.96.11-.75.41-1.26.74-1.55-2.57-.29-5.27-1.28-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.06 0 0 .97-.31 3.17 1.19.92-.26 1.91-.38 2.89-.39.98.01 1.97.13 2.89.39 2.2-1.5 3.17-1.19 3.17-1.19.63 1.59.23 2.77.11 3.06.74.81 1.19 1.85 1.19 3.11 0 4.45-2.71 5.43-5.29 5.72.42.36.79 1.07.79 2.16v3.2c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"/>
+          </svg>
+          <span>streamrip by nathom</span>
+        </a>
+      </div>
+      <section class="features" aria-label="Main features">
+        <h2 data-i18n="mainFeatures">Main features</h2>
+        <ul>
+          <li data-i18n="featureDesktop">macOS and Windows desktop builds.</li>
+          <li data-i18n="featureChecks">Guided checks for streamrip, ffmpeg, metaflac, and local configuration.</li>
+          <li data-i18n="featureAuth">Tidal authorization through the official Tidal login page.</li>
+          <li data-i18n="featurePreview">Automatic preview parsing for Tidal track and album links.</li>
+          <li data-i18n="featureQuality">Max / High quality selection with FLAC and AAC fallback handling.</li>
+          <li data-i18n="featureMetadata">Cover embedding, lyrics writing, .lrc files, and metadata cleanup.</li>
+          <li data-i18n="featureTags">copyright, ISRC, UPC, title, artist, album, year, track, and disc metadata.</li>
+          <li data-i18n="featureQueue">Download queue, retry, log export, existing-file handling, and open-file-location controls.</li>
+        </ul>
+      </section>
       <section class="steps" aria-label="How to use">
         <article class="step-card">
-          <div class="step-label">Step 1</div>
-          <h2>Prepare the environment</h2>
-          <p>
-            Open the app and finish the tool check.<br />
-            If streamrip, ffmpeg, or metaflac is missing, use the setup screen
-            to install the required tools.
+          <div class="step-label" data-i18n="step1Label">Step 1</div>
+          <h2 data-i18n="step1Title">Download and open the app</h2>
+          <p data-i18n="step1Copy">
+            Download the macOS or Windows build and open the app.<br />
+            The first screen checks the local tools needed for downloading and
+            post-processing.
           </p>
         </article>
         <article class="step-card">
-          <div class="step-label">Step 2</div>
-          <h2>Link Tidal</h2>
-          <p>
-            Click the Tidal authorization link and sign in on Tidal.<br />
-            Return to the app after authorization; it will detect the token and
-            unlock the download workspace.
+          <div class="step-label" data-i18n="step2Label">Step 2</div>
+          <h2 data-i18n="step2Title">Complete the environment check</h2>
+          <p data-i18n="step2Copy">
+            If a required tool is missing, follow the one-click install flow or
+            use the manual download link shown in the app.<br />
+            Optional cover tooling can also be installed later when cover
+            embedding is enabled.
           </p>
         </article>
         <article class="step-card">
-          <div class="step-label">Step 3</div>
-          <h2>Paste URLs and download</h2>
-          <p>
-            Copy a Tidal album or track URL into the app.<br />
-            Choose an output folder, keep covers and lyrics enabled, then start
-            the FLAC download.
+          <div class="step-label" data-i18n="step3Label">Step 3</div>
+          <h2 data-i18n="step3Title">Bind Tidal</h2>
+          <p data-i18n="step3Copy">
+            Click the bind button and sign in on Tidal's official authorization
+            page.<br />
+            The app detects the authorization token after the login is complete.
+          </p>
+        </article>
+        <article class="step-card">
+          <div class="step-label" data-i18n="step4Label">Step 4</div>
+          <h2 data-i18n="step4Title">Paste a Tidal link</h2>
+          <p data-i18n="step4Copy">
+            Paste a Tidal track or album URL into the downloader.<br />
+            The app parses the link and shows a preview before downloading.
+          </p>
+        </article>
+        <article class="step-card">
+          <div class="step-label" data-i18n="step5Label">Step 5</div>
+          <h2 data-i18n="step5Title">Choose settings and download</h2>
+          <p data-i18n="step5Copy">
+            Choose Max or High, set the output folder, and decide whether to
+            embed covers and lyrics.<br />
+            After downloading, use the queue to retry failures, export logs, or
+            open the saved file location.
           </p>
         </article>
       </section>
-      <div class="actions secondary-actions">
-        <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download/releases">All releases</a>
-        <a class="button" href="https://github.com/HonstinII/tidal-max-flac-download">Open GitHub repository</a>
-        <a class="button" href="https://github.com/nathom/streamrip">streamrip by nathom</a>
-      </div>
       <p class="credit">
         Tidal Max FLAC Studio by <a href="https://github.com/HonstinII">HonstinII</a>.
         Core downloading is powered by
@@ -200,5 +312,86 @@
         <code>nathom</code>.
       </p>
     </main>
+    <script>
+      const pageCopy = {
+        en: {
+          lead: "Tidal Max FLAC Studio is a local Tidal download workstation built around the open-source project streamrip. It brings Tidal binding, download settings, cover embedding, lyrics writing, and metadata cleanup into a desktop interface.",
+          downloadMac: "Download for macOS",
+          downloadWindows: "Download for Windows",
+          allReleases: "All releases",
+          openRepo: "Open GitHub repository",
+          mainFeatures: "Main features",
+          featureDesktop: "macOS and Windows desktop builds.",
+          featureChecks: "Guided checks for streamrip, ffmpeg, metaflac, and local configuration.",
+          featureAuth: "Tidal authorization through the official Tidal login page.",
+          featurePreview: "Automatic preview parsing for Tidal track and album links.",
+          featureQuality: "Max / High quality selection with FLAC and AAC fallback handling.",
+          featureMetadata: "Cover embedding, lyrics writing, .lrc files, and metadata cleanup.",
+          featureTags: "copyright, ISRC, UPC, title, artist, album, year, track, and disc metadata.",
+          featureQueue: "Download queue, retry, log export, existing-file handling, and open-file-location controls.",
+          step1Label: "Step 1",
+          step1Title: "Download and open the app",
+          step1Copy: "Download the macOS or Windows build and open the app.<br />The first screen checks the local tools needed for downloading and post-processing.",
+          step2Label: "Step 2",
+          step2Title: "Complete the environment check",
+          step2Copy: "If a required tool is missing, follow the one-click install flow or use the manual download link shown in the app.<br />Optional cover tooling can also be installed later when cover embedding is enabled.",
+          step3Label: "Step 3",
+          step3Title: "Bind Tidal",
+          step3Copy: "Click the bind button and sign in on Tidal's official authorization page.<br />The app detects the authorization token after the login is complete.",
+          step4Label: "Step 4",
+          step4Title: "Paste a Tidal link",
+          step4Copy: "Paste a Tidal track or album URL into the downloader.<br />The app parses the link and shows a preview before downloading.",
+          step5Label: "Step 5",
+          step5Title: "Choose settings and download",
+          step5Copy: "Choose Max or High, set the output folder, and decide whether to embed covers and lyrics.<br />After downloading, use the queue to retry failures, export logs, or open the saved file location.",
+        },
+        zh: {
+          lead: "Tidal Max FLAC Studio 是一个本地运行的 Tidal 下载工作台，基于开源项目 streamrip 构建。它把 Tidal 绑定、下载设置、封面嵌入、歌词写入和 metadata 整理放进一个更直观的桌面界面。",
+          downloadMac: "下载 macOS 版本",
+          downloadWindows: "下载 Windows 版本",
+          allReleases: "所有版本",
+          openRepo: "打开 GitHub 仓库",
+          mainFeatures: "主要功能",
+          featureDesktop: "提供 macOS 和 Windows 桌面应用。",
+          featureChecks: "引导检查 streamrip、ffmpeg、metaflac 和本地配置。",
+          featureAuth: "通过 Tidal 官方登录页面完成授权绑定。",
+          featurePreview: "自动解析 Tidal 单曲和专辑链接，并显示预览。",
+          featureQuality: "支持 Max / High 品质选择，并处理 FLAC 与 AAC 兜底。",
+          featureMetadata: "支持封面嵌入、歌词写入、.lrc 文件和 metadata 整理。",
+          featureTags: "写入 copyright、ISRC、UPC、标题、歌手、专辑、年份、曲号和碟号等 metadata。",
+          featureQueue: "提供下载队列、失败重试、日志导出、已有文件处理和打开文件位置。",
+          step1Label: "步骤 1",
+          step1Title: "下载并打开应用",
+          step1Copy: "下载 macOS 或 Windows 版本并打开应用。<br />首次进入会检查本地下载和后处理所需工具。",
+          step2Label: "步骤 2",
+          step2Title: "完成环境检查",
+          step2Copy: "如果缺少必要工具，可以按应用里的提示进行一键安装，或使用手动下载入口。<br />封面工具也可以在启用封面嵌入时再安装。",
+          step3Label: "步骤 3",
+          step3Title: "绑定 Tidal",
+          step3Copy: "点击绑定按钮，在 Tidal 官方授权页面登录。<br />授权完成后，应用会自动检测 token 并进入下载工作台。",
+          step4Label: "步骤 4",
+          step4Title: "粘贴 Tidal 链接",
+          step4Copy: "把 Tidal 单曲或专辑链接粘贴到下载器里。<br />应用会在下载前自动解析并展示预览。",
+          step5Label: "步骤 5",
+          step5Title: "选择设置并下载",
+          step5Copy: "选择 Max 或 High，设置输出目录，并决定是否嵌入封面和歌词。<br />下载完成后，可以在队列里重试失败项、导出日志或打开文件位置。",
+        },
+      };
+
+      function setPageLanguage(language) {
+        const active = pageCopy[language] ? language : "en";
+        document.documentElement.lang = active === "zh" ? "zh-CN" : "en";
+        document.querySelectorAll("[data-i18n]").forEach((node) => {
+          node.innerHTML = pageCopy[active][node.dataset.i18n] || node.innerHTML;
+        });
+        document.querySelector("#langEn").classList.toggle("active", active === "en");
+        document.querySelector("#langZh").classList.toggle("active", active === "zh");
+        localStorage.setItem("pagesLanguage", active);
+      }
+
+      document.querySelector("#langEn").addEventListener("click", () => setPageLanguage("en"));
+      document.querySelector("#langZh").addEventListener("click", () => setPageLanguage("zh"));
+      setPageLanguage(localStorage.getItem("pagesLanguage") || "en");
+    </script>
   </body>
 </html>
