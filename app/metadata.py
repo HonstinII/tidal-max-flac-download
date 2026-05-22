@@ -32,8 +32,18 @@ def repair_flac_tags(flac_path: Path, track: TrackItem) -> bool:
     if track.total_discs is not None:
         audio["disctotal"] = [str(track.total_discs)]
         audio["totaldiscs"] = [str(track.total_discs)]
+    if track.copyright:
+        audio["copyright"] = [track.copyright]
+    if track.isrc:
+        audio["isrc"] = [track.isrc]
+    if track.upc:
+        audio["upc"] = [track.upc]
     audio.save()
     return True
+
+
+def mp4_freeform(value: str) -> list[bytes]:
+    return [value.encode("utf-8")]
 
 
 def repair_mp4_tags(mp4_path: Path, track: TrackItem) -> bool:
@@ -50,5 +60,12 @@ def repair_mp4_tags(mp4_path: Path, track: TrackItem) -> bool:
         audio["trkn"] = [(track.track_number, track.total_tracks or 0)]
     if track.disc_number is not None:
         audio["disk"] = [(track.disc_number, track.total_discs or 0)]
+    if track.copyright:
+        audio["cprt"] = [track.copyright]
+        audio["----:com.apple.iTunes:COPYRIGHT"] = mp4_freeform(track.copyright)
+    if track.isrc:
+        audio["----:com.apple.iTunes:ISRC"] = mp4_freeform(track.isrc)
+    if track.upc:
+        audio["----:com.apple.iTunes:UPC"] = mp4_freeform(track.upc)
     audio.save()
     return True

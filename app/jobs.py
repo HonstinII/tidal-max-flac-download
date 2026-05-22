@@ -9,7 +9,7 @@ from typing import Callable, Iterable
 
 import requests
 
-from .config import default_config
+from .config import cover_cache_dir, default_config
 from .covers import embed_cover, embed_mp4_cover
 from .downloader import DownloadOptions, LossyAudioAvailable, download_track_as_flac, parse_flac_dash_manifest
 from .lyrics import embed_lyrics, embed_mp4_lyrics, extract_lyrics_text, write_lrc
@@ -269,12 +269,13 @@ class DownloadJobManager:
         self.database.update_queue_item(item["id"], status=status, output_path=str(result.output_path))
         is_flac_output = result.output_path.suffix.lower() == ".flac"
         is_mp4_output = result.output_path.suffix.lower() in {".m4a", ".mp4"}
+        cover_cache = cover_cache_dir()
         if is_flac_output and options.get("embed_covers", True) and result.status != "skipped":
             self._warn_if_fails(
                 run_id,
                 item["id"],
                 "cover",
-                lambda: embed_cover(result.output_path, track.cover_id, Path(run["output_dir"]) / ".covers")
+                lambda: embed_cover(result.output_path, track.cover_id, cover_cache)
                 if not has_cover(result.output_path)
                 else True,
             )
@@ -287,7 +288,7 @@ class DownloadJobManager:
                 run_id,
                 item["id"],
                 "cover",
-                lambda: embed_mp4_cover(result.output_path, track.cover_id, Path(run["output_dir"]) / ".covers"),
+                lambda: embed_mp4_cover(result.output_path, track.cover_id, cover_cache),
             ):
                 self.emit_run(run_id, {"stage": "cover", "item_id": item["id"], "track_id": track.track_id})
         if is_mp4_output and options.get("embed_lyrics", True) and lyrics and result.status != "skipped":
@@ -423,6 +424,9 @@ def track_to_dict(track: TrackItem) -> dict:
         "total_tracks": track.total_tracks,
         "disc_number": track.disc_number,
         "total_discs": track.total_discs,
+        "copyright": track.copyright,
+        "isrc": track.isrc,
+        "upc": track.upc,
     }
 
 
@@ -440,6 +444,9 @@ def track_from_item(item: dict) -> TrackItem:
         total_tracks=item.get("total_tracks"),
         disc_number=item.get("disc_number"),
         total_discs=item.get("total_discs"),
+        copyright=item.get("copyright"),
+        isrc=item.get("isrc"),
+        upc=item.get("upc"),
     )
 
 

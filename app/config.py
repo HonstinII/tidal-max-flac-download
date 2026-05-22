@@ -4,6 +4,7 @@ import platform
 from pathlib import Path
 
 from .environment import detect_environment
+from .environment import app_data_dir
 from .environment import tool_status as environment_tool_status
 from .tidal_config import read_tidal_auth
 
@@ -29,6 +30,10 @@ def default_config() -> AppConfig:
         streamrip_config=streamrip_config_path(),
         output_dir=Path.home() / "Music/Streamrip/Tidal-Max-FLAC",
     )
+
+
+def cover_cache_dir() -> Path:
+    return app_data_dir() / "cache/covers"
 
 
 def tool_status() -> dict[str, bool]:

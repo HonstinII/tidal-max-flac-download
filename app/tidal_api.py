@@ -30,6 +30,9 @@ class TrackItem:
     total_tracks: int | None = None
     disc_number: int | None = None
     total_discs: int | None = None
+    copyright: str | None = None
+    isrc: str | None = None
+    upc: str | None = None
 
 
 def parse_tidal_url(url: str) -> TidalReference:
@@ -126,4 +129,7 @@ class TidalApi:
             total_tracks=total_tracks,
             disc_number=track.get("volumeNumber") or track.get("discNumber") or (1 if album else None),
             total_discs=total_discs or (1 if album else None),
+            copyright=str(track.get("copyright") or track_album.get("copyright") or "") or None,
+            isrc=str(track.get("isrc") or "") or None,
+            upc=str(track_album.get("upc") or "") or None,
         )

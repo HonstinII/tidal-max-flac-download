@@ -14,6 +14,9 @@ def track():
         total_tracks=12,
         disc_number=1,
         total_discs=1,
+        copyright="© 2026 Label",
+        isrc="USABC2600001",
+        upc="123456789012",
     )
 
 
@@ -42,6 +45,9 @@ def test_repair_flac_tags_rewrites_core_metadata(monkeypatch, tmp_path):
     assert audio["discnumber"] == ["1"]
     assert audio["disctotal"] == ["1"]
     assert audio["totaldiscs"] == ["1"]
+    assert audio["copyright"] == ["© 2026 Label"]
+    assert audio["isrc"] == ["USABC2600001"]
+    assert audio["upc"] == ["123456789012"]
     assert audio["saved"] == ["yes"]
 
 
@@ -63,6 +69,10 @@ def test_repair_mp4_tags_rewrites_core_metadata(monkeypatch, tmp_path):
     assert audio["\xa9day"] == ["2026"]
     assert audio["trkn"] == [(7, 12)]
     assert audio["disk"] == [(1, 1)]
+    assert audio["cprt"] == ["© 2026 Label"]
+    assert audio["----:com.apple.iTunes:COPYRIGHT"] == ["© 2026 Label".encode("utf-8")]
+    assert audio["----:com.apple.iTunes:ISRC"] == ["USABC2600001".encode("utf-8")]
+    assert audio["----:com.apple.iTunes:UPC"] == ["123456789012".encode("utf-8")]
     assert audio["saved"] == ["yes"]
 
 

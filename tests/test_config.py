@@ -1,12 +1,16 @@
 from pathlib import Path
 
-from app.config import default_config, setup_status, streamrip_config_path, tool_status
+from app.config import cover_cache_dir, default_config, setup_status, streamrip_config_path, tool_status
 
 
 def test_default_output_directory_uses_music_streamrip():
     config = default_config()
 
     assert config.output_dir == Path.home() / "Music/Streamrip/Tidal-Max-FLAC"
+
+
+def test_cover_cache_dir_is_outside_music_output():
+    assert cover_cache_dir() == Path.home() / "Library/Application Support/Tidal Max FLAC Studio/cache/covers"
 
 
 def test_streamrip_config_path_uses_macos_application_support():

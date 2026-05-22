@@ -155,6 +155,7 @@ def test_queue_worker_runs_metadata_postprocessing(monkeypatch, tmp_path):
     assert ("lyrics", "[00:01.00] synced") in calls
     assert ("lrc", "[00:01.00] synced") in calls
     assert ("repair", "Song") in calls
+    assert not (tmp_path / ".covers").exists()
 
 
 def test_queue_worker_runs_mp4_metadata_postprocessing(monkeypatch, tmp_path):
@@ -196,6 +197,7 @@ def test_queue_worker_runs_mp4_metadata_postprocessing(monkeypatch, tmp_path):
     assert ("mp4_lyrics", "plain") in calls
     assert ("lrc", "plain") in calls
     assert ("mp4_repair", "Song") in calls
+    assert not (tmp_path / ".covers").exists()
 
 
 def test_queue_worker_falls_back_from_max_to_high(monkeypatch, tmp_path):

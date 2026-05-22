@@ -102,6 +102,9 @@ def preview_track(track: TrackItem) -> dict:
         "total_tracks": track.total_tracks,
         "disc_number": track.disc_number,
         "total_discs": track.total_discs,
+        "copyright": track.copyright,
+        "isrc": track.isrc,
+        "upc": track.upc,
     }
 
 

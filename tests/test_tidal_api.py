@@ -53,11 +53,13 @@ def test_resolve_album_expands_track_items():
                 "artist": {"name": "Artist"},
                 "releaseDate": "2026-01-02",
                 "cover": "cover-id",
+                "copyright": "© 2026 Label",
+                "upc": "123456789012",
             },
             {
                 "items": [
-                    {"item": {"id": 1, "title": "One", "artist": {"name": "Artist"}, "duration": 209}},
-                    {"item": {"id": 2, "title": "Two", "artist": {"name": "Artist"}}},
+                    {"item": {"id": 1, "title": "One", "artist": {"name": "Artist"}, "duration": 209, "isrc": "USABC2600001"}},
+                    {"item": {"id": 2, "title": "Two", "artist": {"name": "Artist"}, "copyright": "© 2026 Track Label"}},
                 ]
             },
         ]
@@ -81,3 +83,7 @@ def test_resolve_album_expands_track_items():
     assert [track.total_discs for track in tracks] == [1, 1]
     assert tracks[0].album_title == "Album"
     assert tracks[0].duration_seconds == 209
+    assert tracks[0].copyright == "© 2026 Label"
+    assert tracks[0].isrc == "USABC2600001"
+    assert tracks[0].upc == "123456789012"
+    assert tracks[1].copyright == "© 2026 Track Label"
