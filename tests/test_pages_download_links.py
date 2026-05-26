@@ -26,6 +26,45 @@ def test_pages_has_language_toggle():
     assert "主要功能" in html
 
 
+def test_pages_uses_prism_canvas_background():
+    html = (ROOT / "docs" / "index.html").read_text()
+
+    assert 'id="prismBackground"' in html
+    assert "createPrismBackground" in html
+    assert "animationType: \"rotate\"" in html
+    assert "baseWidth: 5.5" in html
+    assert "timeScale: 0.2" in html
+    assert "maxFps: 30" in html
+    assert "resolutionScale: 0.58" in html
+    assert "document.addEventListener(\"visibilitychange\"" in html
+    assert "pointermove" not in html
+    assert "hoverStrength" not in html
+    assert "assets/prism-background.mp4" not in html
+    assert "background-video" not in html
+
+
+def test_pages_has_button_hover_motion():
+    html = (ROOT / "docs" / "index.html").read_text()
+
+    assert "#5fcb97" in html
+    assert "a.button::before" in html
+    assert "translateY(-101%)" in html
+    assert "cubic-bezier(0.2, 0.78, 0.2, 1)" in html
+    assert "star-border" in html
+    assert "conic-gradient" in html
+    assert "star-border-spin 5s linear infinite" in html
+    assert "padding: 2px" in html
+
+
+def test_pages_prism_background_is_visible():
+    html = (ROOT / "docs" / "index.html").read_text()
+
+    assert "opacity: 0.94" in html
+    assert "brightness(1.45)" in html
+    assert "glow: 1.55" in html
+    assert "bloom: 1.18" in html
+
+
 def test_pages_has_telegram_contact_button():
     html = (ROOT / "docs" / "index.html").read_text()
 

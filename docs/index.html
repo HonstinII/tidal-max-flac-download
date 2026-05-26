@@ -31,10 +31,32 @@
         font-family: Avenir Next, Avenir, Helvetica Neue, sans-serif;
       }
 
+      .prism-background {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        width: 100%;
+        height: 100%;
+        opacity: 0.94;
+        filter: brightness(1.45) saturate(1.15);
+      }
+
+      .background-scrim {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background:
+          linear-gradient(90deg, rgba(9, 13, 11, 0.72), rgba(9, 13, 11, 0.34) 52%, rgba(9, 13, 11, 0.5)),
+          linear-gradient(180deg, rgba(9, 13, 11, 0.2), rgba(9, 13, 11, 0.7));
+        pointer-events: none;
+      }
+
       main {
         width: min(1080px, calc(100vw - 32px));
         margin: 0 auto;
         padding: 56px 0;
+        position: relative;
+        z-index: 1;
       }
 
       .page-language {
@@ -93,6 +115,8 @@
       }
 
       a.button {
+        position: relative;
+        overflow: hidden;
         display: inline-flex;
         align-items: center;
         gap: 9px;
@@ -102,6 +126,39 @@
         min-height: 44px;
         padding: 11px 16px;
         text-decoration: none;
+        transform: translateY(0);
+        transition:
+          transform 180ms ease,
+          border-color 180ms ease,
+          color 180ms ease,
+          background 220ms ease,
+          box-shadow 220ms ease;
+      }
+
+      a.button::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(180deg, rgba(70, 213, 159, 0.28), rgba(70, 213, 159, 0.04));
+        opacity: 0;
+        transform: translateY(-101%);
+        transition:
+          transform 420ms cubic-bezier(0.2, 0.78, 0.2, 1),
+          opacity 220ms ease;
+      }
+
+      a.button:hover,
+      a.button:focus-visible {
+        transform: translateY(-2px);
+        border-color: color-mix(in srgb, var(--accent) 70%, var(--line));
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.26);
+      }
+
+      a.button:hover::before,
+      a.button:focus-visible::before {
+        opacity: 1;
+        transform: translateY(0);
       }
 
       .button svg {
@@ -112,17 +169,68 @@
       }
 
       a.primary {
-        border: 0;
-        background: var(--accent);
-        color: #07110d;
+        border-color: color-mix(in srgb, white 30%, var(--line));
+        background: #111714;
+        color: #5fcb97;
         font-weight: 700;
       }
 
       a.secondary-download {
-        border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
-        background: rgba(70, 213, 159, 0.08);
-        color: var(--text);
+        border-color: color-mix(in srgb, white 30%, var(--line));
+        background: #111714;
+        color: #5fcb97;
         font-weight: 700;
+      }
+
+      a.star-border {
+        border: 0;
+        padding: 13px 18px;
+        isolation: isolate;
+      }
+
+      a.star-border::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        border-radius: inherit;
+        padding: 2px;
+        background:
+          conic-gradient(
+            from var(--star-angle),
+            transparent 0deg,
+            transparent 52deg,
+            white 70deg,
+            transparent 92deg,
+            transparent 180deg,
+            transparent 232deg,
+            white 250deg,
+            transparent 272deg,
+            transparent 360deg
+          );
+        animation: star-border-spin 5s linear infinite;
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+      }
+
+      a.star-border:hover::after,
+      a.star-border:focus-visible::after {
+        animation-duration: 3.2s;
+      }
+
+      @property --star-angle {
+        syntax: "<angle>";
+        inherits: false;
+        initial-value: 0deg;
+      }
+
+      @keyframes star-border-spin {
+        to {
+          --star-angle: 360deg;
+        }
       }
 
       code {
@@ -189,9 +297,17 @@
         margin: 0;
         max-width: 620px;
       }
+
+      @media (prefers-reduced-motion: reduce) {
+        .prism-background {
+          display: none;
+        }
+      }
     </style>
   </head>
   <body>
+    <canvas id="prismBackground" class="prism-background" aria-hidden="true"></canvas>
+    <div class="background-scrim" aria-hidden="true"></div>
     <div class="page-language" aria-label="Language">
       <button id="langEn" type="button" class="active">EN</button>
       <button id="langZh" type="button">中文</button>
@@ -206,7 +322,7 @@
       </p>
       <div class="actions">
         <a
-          class="button primary"
+          class="button primary star-border"
           href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.3.6/Tidal-Max-FLAC-Studio-macOS.zip"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -215,7 +331,7 @@
           <span data-i18n="downloadMac">Download for macOS</span>
         </a>
         <a
-          class="button secondary-download"
+          class="button secondary-download star-border"
           href="https://github.com/HonstinII/tidal-max-flac-download/releases/download/v0.3.6/Tidal-Max-FLAC-Studio-Windows.zip"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -400,6 +516,122 @@
       document.querySelector("#langEn").addEventListener("click", () => setPageLanguage("en"));
       document.querySelector("#langZh").addEventListener("click", () => setPageLanguage("zh"));
       setPageLanguage(localStorage.getItem("pagesLanguage") || "en");
+
+      const prismConfig = {
+        height: 3,
+        baseWidth: 5.5,
+        animationType: "rotate",
+        glow: 1.55,
+        noise: 0.5,
+        transparent: true,
+        scale: 3.5,
+        hueShift: -0.0416,
+        colorFrequency: 1,
+        bloom: 1.18,
+        timeScale: 0.2,
+        maxFps: 30,
+        resolutionScale: 0.58,
+      };
+
+      function createPrismBackground(canvas, config) {
+        const context = canvas.getContext("2d", { alpha: true });
+        if (!context || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+        let width = 0;
+        let height = 0;
+        let pixelRatio = 1;
+        let start = performance.now();
+        let lastFrame = 0;
+        const frameInterval = 1000 / config.maxFps;
+        const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+        let paused = false;
+
+        function resize() {
+          pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5) * config.resolutionScale;
+          width = window.innerWidth;
+          height = window.innerHeight;
+          canvas.width = Math.floor(width * pixelRatio);
+          canvas.height = Math.floor(height * pixelRatio);
+          canvas.style.width = `${width}px`;
+          canvas.style.height = `${height}px`;
+          context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        }
+
+        function hueToRgb(t) {
+          const hue = ((t + config.hueShift) % 1 + 1) % 1;
+          const saturation = 0.55;
+          const lightness = 0.5;
+          const k = (n) => (n + hue * 12) % 12;
+          const a = saturation * Math.min(lightness, 1 - lightness);
+          const f = (n) => lightness - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+          return `rgb(${Math.round(f(0) * 255)}, ${Math.round(f(8) * 255)}, ${Math.round(f(4) * 255)})`;
+        }
+
+        function drawPrism(time) {
+          if (paused) {
+            window.requestAnimationFrame(drawPrism);
+            return;
+          }
+          if (time - lastFrame < frameInterval) {
+            window.requestAnimationFrame(drawPrism);
+            return;
+          }
+          lastFrame = time;
+
+          const elapsed = ((time - start) / 1000) * config.timeScale;
+
+          context.clearRect(0, 0, width, height);
+          context.globalCompositeOperation = "lighter";
+          context.lineCap = "round";
+          context.lineJoin = "round";
+
+          const centerX = width * 0.514;
+          const centerY = height * 0.468;
+          const radius = Math.max(width, height) / config.scale;
+          const points = 7;
+          const layers = Math.round(config.height * 9);
+
+          for (let layer = 0; layer < layers; layer += 1) {
+            const depth = layer / layers;
+            const angleBase = elapsed * 0.65 + depth * 2.6;
+            const alpha = (0.018 + 0.025 * (1 - depth)) * config.glow;
+            const lineWidth = config.baseWidth * (1 - depth * 0.62);
+            const color = hueToRgb(depth * config.colorFrequency + elapsed * 0.08);
+
+            context.beginPath();
+            for (let point = 0; point <= points; point += 1) {
+              const turn = (point / points) * Math.PI * 2;
+              const wobble =
+                Math.sin(turn * 3 + elapsed * 1.8 + layer * 0.13) * 0.08 * config.noise +
+                Math.cos(turn * 5 - elapsed * 1.1 + layer * 0.07) * 0.05 * config.noise;
+              const radiusOffset = radius * (0.42 + depth * 0.72 + wobble);
+              const angle = turn + angleBase;
+              const x = centerX + Math.cos(angle) * radiusOffset * (1.72 - depth * 0.62);
+              const y = centerY + Math.sin(angle) * radiusOffset * (0.58 + depth * 0.16);
+              if (point === 0) context.moveTo(x, y);
+              else context.lineTo(x, y);
+            }
+
+            context.strokeStyle = color.replace("rgb", "rgba").replace(")", `, ${alpha})`);
+            context.lineWidth = lineWidth;
+            context.shadowColor = color;
+            context.shadowBlur = 9 * config.bloom * (1 - depth * 0.3);
+            context.stroke();
+          }
+
+          context.globalCompositeOperation = "source-over";
+          window.requestAnimationFrame(drawPrism);
+        }
+
+        window.addEventListener("resize", resize);
+        document.addEventListener("visibilitychange", () => {
+          paused = document.hidden || mediaQuery.matches;
+        });
+        resize();
+        window.requestAnimationFrame(drawPrism);
+      }
+
+      createPrismBackground(document.querySelector("#prismBackground"), prismConfig);
     </script>
   </body>
 </html>
