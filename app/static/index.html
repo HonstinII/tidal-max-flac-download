@@ -277,6 +277,19 @@
         </div>
       </div>
     </div>
+    <div id="updateModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="updateTitle">
+      <div class="modal">
+        <p class="section-kicker" data-i18n="updateAvailable">Update available</p>
+        <h2 id="updateTitle" data-i18n="updateTitle">A new version is ready</h2>
+        <p id="updateCopy" class="muted"></p>
+        <div id="updateNotes" class="update-notes hidden"></div>
+        <div class="modal-actions">
+          <button id="downloadUpdateButton" type="button" class="primary-button" data-i18n="downloadUpdate">Download update</button>
+          <a id="openReleaseButton" class="secondary-button" href="https://github.com/HonstinII/tidal-max-flac-download/releases/latest" target="_blank" rel="noreferrer" data-i18n="openRelease">Open release page</a>
+          <button id="laterUpdateButton" type="button" class="secondary-button" data-i18n="later">Later</button>
+        </div>
+      </div>
+    </div>
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
     <script src="/static/app.js"></script>
   </body>

@@ -413,6 +413,19 @@ h2 {
   color: var(--meter);
 }
 
+.update-notes {
+  max-height: 160px;
+  overflow: auto;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  background: #0d1310;
+  padding: 12px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .modal-actions {
   display: flex;
   gap: 10px;

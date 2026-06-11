@@ -64,3 +64,17 @@ def test_settings_modal_groups_advanced_controls():
     assert "save_cover_file" in js
     assert "cover_file_strategy" in js
     assert "include_transient=true" in js
+
+
+def test_update_modal_supports_confirm_before_download():
+    html = (ROOT / "app" / "static" / "index.html").read_text()
+    js = (ROOT / "app" / "static" / "app.js").read_text()
+
+    assert 'id="updateModal"' in html
+    assert 'id="downloadUpdateButton"' in html
+    assert 'id="openReleaseButton"' in html
+    assert 'id="laterUpdateButton"' in html
+    assert "/api/update/check" in js
+    assert "/api/update/download" in js
+    assert "dismissedUpdateTag" in js
+    assert "checkForUpdates" in js

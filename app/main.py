@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import asdict, is_dataclass
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -18,6 +19,7 @@ from .installer import InstallJobManager, extract_bundled_flac
 from .storage import AppDatabase
 from .tidal_api import TidalApi, TrackItem, parse_tidal_url
 from .tidal_config import read_tidal_auth
+from .updater import check_for_update, download_update_asset
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DIR = APP_DIR / "static"
@@ -77,6 +79,11 @@ class RetryRequest(BaseModel):
     allow_lossy_audio: bool = False
 
 
+class UpdateDownloadRequest(BaseModel):
+    asset_url: str
+    asset_name: str
+
+
 @app.get("/")
 def index():
     return FileResponse(STATIC_DIR / "index.html")
@@ -85,6 +92,19 @@ def index():
 @app.get("/api/health")
 def health():
     return {"ok": True}
+
+
+@app.get("/api/update/check")
+def check_update():
+    info = check_for_update()
+    return asdict(info) if is_dataclass(info) else info
+
+
+@app.post("/api/update/download")
+def download_update(request: UpdateDownloadRequest):
+    path = download_update_asset(request.asset_url, request.asset_name)
+    open_folder(path.parent)
+    return {"ok": True, "path": str(path)}
 
 
 @app.get("/api/setup/status")

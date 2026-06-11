@@ -12,6 +12,7 @@ const state = {
   previewAbort: null,
   audioQuality: localStorage.getItem("audioQuality") || "max",
   clearedQueueBefore: 0,
+  updateInfo: null,
 };
 
 const els = {
@@ -65,6 +66,12 @@ const els = {
   installCoverToolButton: document.querySelector("#installCoverToolButton"),
   recheckCoverToolButton: document.querySelector("#recheckCoverToolButton"),
   cancelCoverToolButton: document.querySelector("#cancelCoverToolButton"),
+  updateModal: document.querySelector("#updateModal"),
+  updateCopy: document.querySelector("#updateCopy"),
+  updateNotes: document.querySelector("#updateNotes"),
+  downloadUpdateButton: document.querySelector("#downloadUpdateButton"),
+  openReleaseButton: document.querySelector("#openReleaseButton"),
+  laterUpdateButton: document.querySelector("#laterUpdateButton"),
   toast: document.querySelector("#toast"),
 };
 
@@ -105,6 +112,15 @@ const copy = {
     cancelCoverTool: "Cancel",
     coverToolInstalling: "Installing cover embedding tool...",
     coverToolInstalled: "Cover tool is ready. Cover embedding is enabled.",
+    updateAvailable: "Update available",
+    updateTitle: "A new version is ready",
+    updateCopy: "Version {latest} is available. You are using {current}. Download the update package when you are ready to install it.",
+    downloadUpdate: "Download update",
+    downloadingUpdate: "Downloading update...",
+    updateDownloaded: "Update downloaded. Open the folder and install it when you are ready.",
+    updateDownloadFailed: "Update download failed. Open the release page and download it manually.",
+    openRelease: "Open release page",
+    later: "Later",
     recheck: "Recheck",
     platform: "Platform",
     copyCommand: "Copy command",
@@ -226,6 +242,15 @@ const copy = {
     cancelCoverTool: "取消",
     coverToolInstalling: "正在安装封面嵌入工具...",
     coverToolInstalled: "封面工具已就绪，已启用嵌入封面。",
+    updateAvailable: "发现新版本",
+    updateTitle: "新版本已准备好",
+    updateCopy: "发现 {latest}，当前版本是 {current}。你可以在准备安装时下载更新包。",
+    downloadUpdate: "下载更新",
+    downloadingUpdate: "正在下载更新...",
+    updateDownloaded: "更新包已下载，打开文件夹后按需安装。",
+    updateDownloadFailed: "更新下载失败，请打开 Release 页面手动下载。",
+    openRelease: "打开 Release 页面",
+    later: "稍后",
     recheck: "重新检查",
     platform: "平台",
     copyCommand: "复制命令",
@@ -960,6 +985,62 @@ function hideSettingsModal() {
   closeCustomSelectMenus();
 }
 
+function showUpdateModal(info) {
+  state.updateInfo = info;
+  els.updateCopy.textContent = t("updateCopy")
+    .replace("{latest}", info.latest_version || "")
+    .replace("{current}", info.current_version || "");
+  els.openReleaseButton.href = info.release_url || "https://github.com/HonstinII/tidal-max-flac-download/releases/latest";
+  els.downloadUpdateButton.disabled = !info.asset_url;
+  const notes = String(info.release_notes || "").trim();
+  els.updateNotes.classList.toggle("hidden", !notes);
+  els.updateNotes.textContent = notes;
+  els.updateModal.classList.remove("hidden");
+}
+
+function hideUpdateModal() {
+  els.updateModal.classList.add("hidden");
+}
+
+async function checkForUpdates() {
+  try {
+    const response = await fetch("/api/update/check");
+    const info = await response.json();
+    const dismissedTag = localStorage.getItem("dismissedUpdateTag");
+    if (info.available && info.latest_version !== dismissedTag) {
+      showUpdateModal(info);
+    }
+  } catch {
+    // Update checks are helpful but should never block the downloader.
+  }
+}
+
+async function downloadUpdate() {
+  if (!state.updateInfo?.asset_url) {
+    window.open(els.openReleaseButton.href, "_blank", "noopener,noreferrer");
+    return;
+  }
+  els.downloadUpdateButton.disabled = true;
+  showToast(t("downloadingUpdate"), "info");
+  try {
+    const response = await fetch("/api/update/download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        asset_url: state.updateInfo.asset_url,
+        asset_name: state.updateInfo.asset_name,
+      }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    showToast(t("updateDownloaded"), "success", 5000);
+    localStorage.setItem("dismissedUpdateTag", state.updateInfo.latest_version);
+    hideUpdateModal();
+  } catch {
+    showToast(t("updateDownloadFailed"), "error", 6000);
+    els.downloadUpdateButton.disabled = false;
+  }
+}
+
 function selectLabelKey(selectId, value) {
   const keys = {
     lyricsMode: {
@@ -1041,6 +1122,13 @@ els.urlInput.addEventListener("paste", () => setTimeout(scheduleAutoPreview, 0))
 els.downloadButton.addEventListener("click", startDownload);
 els.settingsButton.addEventListener("click", showSettingsModal);
 els.closeSettingsButton.addEventListener("click", hideSettingsModal);
+els.downloadUpdateButton.addEventListener("click", downloadUpdate);
+els.laterUpdateButton.addEventListener("click", () => {
+  if (state.updateInfo?.latest_version) {
+    localStorage.setItem("dismissedUpdateTag", state.updateInfo.latest_version);
+  }
+  hideUpdateModal();
+});
 els.audioQualityButton.addEventListener("click", toggleAudioQualityMenu);
 els.audioQualityMenu.addEventListener("click", (event) => {
   const option = event.target.closest("[data-quality]");
@@ -1114,6 +1202,7 @@ document.addEventListener("keydown", (event) => {
     els.audioQualityMenu.classList.add("hidden");
     els.audioQualityButton.setAttribute("aria-expanded", "false");
     closeCustomSelectMenus();
+    hideUpdateModal();
   }
 });
 els.langEn.addEventListener("click", () => {
@@ -1150,9 +1239,11 @@ async function revealFile(path) {
     body: JSON.stringify({ path }),
   });
 }
-refreshSetup().catch((error) => {
-  els.bindMessage.textContent = `Startup failed: ${error.message}`;
-});
+refreshSetup()
+  .then(checkForUpdates)
+  .catch((error) => {
+    els.bindMessage.textContent = `Startup failed: ${error.message}`;
+  });
 refreshQueue().catch(() => {});
 applyLanguage();
 setAudioQuality(state.audioQuality);
