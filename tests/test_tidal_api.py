@@ -87,3 +87,71 @@ def test_resolve_album_expands_track_items():
     assert tracks[0].isrc == "USABC2600001"
     assert tracks[0].upc == "123456789012"
     assert tracks[1].copyright == "© 2026 Track Label"
+
+
+def test_resolve_uses_tidal_artists_array_for_multi_artist_tracks():
+    session = FakeSession(
+        [
+            {
+                "id": 9,
+                "title": "Album",
+                "artists": [{"name": "Album A"}, {"name": "Album B"}],
+                "artist": {"name": "Primary Album Artist"},
+                "releaseDate": "2026-01-02",
+                "cover": "cover-id",
+            },
+            {
+                "items": [
+                    {
+                        "item": {
+                            "id": 1,
+                            "title": "One",
+                            "artists": [{"name": "Track A"}, {"name": "Track B"}],
+                            "artist": {"name": "Primary Track Artist"},
+                        }
+                    }
+                ]
+            },
+        ]
+    )
+    api = TidalApi(
+        TidalAuthState(
+            bound=True,
+            country_code="US",
+            access_token="token",
+            refresh_token="refresh",
+        ),
+        session=session,
+    )
+
+    tracks = api.resolve(parse_tidal_url("https://tidal.com/album/9"))
+
+    assert tracks[0].artist == "Track A, Track B"
+    assert tracks[0].album_artist == "Album A, Album B"
+
+
+def test_resolve_deduplicates_artist_names_from_tidal_artists_array():
+    session = FakeSession(
+        [
+            {
+                "id": 1,
+                "title": "Song",
+                "artists": [{"name": "Artist"}, {"name": "Artist"}, {"name": "Guest"}],
+                "artist": {"name": "Artist"},
+                "album": {"title": "Single", "artist": {"name": "Artist"}},
+            }
+        ]
+    )
+    api = TidalApi(
+        TidalAuthState(
+            bound=True,
+            country_code="US",
+            access_token="token",
+            refresh_token="refresh",
+        ),
+        session=session,
+    )
+
+    tracks = api.resolve(parse_tidal_url("https://tidal.com/track/1"))
+
+    assert tracks[0].artist == "Artist, Guest"

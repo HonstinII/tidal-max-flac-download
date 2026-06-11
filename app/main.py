@@ -40,6 +40,8 @@ class JobRequest(BaseModel):
     audio_quality: str = "max"
     allow_lossy_audio: bool = False
     write_lrc: bool = False
+    save_cover_file: bool = False
+    cover_file_strategy: str = "skip"
     lyrics_mode: str = "auto"
     skip_existing: bool = True
 
@@ -57,6 +59,8 @@ class QueueRequest(BaseModel):
     audio_quality: str = "max"
     allow_lossy_audio: bool = False
     write_lrc: bool = False
+    save_cover_file: bool = False
+    cover_file_strategy: str = "skip"
     lyrics_mode: str = "auto"
     skip_existing: bool = True
     existing_strategy: str = "skip"
@@ -157,6 +161,8 @@ def create_queue(request: QueueRequest):
         "audio_quality": request.audio_quality,
         "allow_lossy_audio": request.allow_lossy_audio,
         "write_lrc": request.write_lrc,
+        "save_cover_file": request.save_cover_file,
+        "cover_file_strategy": request.cover_file_strategy,
         "lyrics_mode": request.lyrics_mode,
         "existing_strategy": request.existing_strategy,
         "skip_existing": request.skip_existing,
@@ -334,6 +340,8 @@ def create_job(request: JobRequest):
         audio_quality=request.audio_quality,
         allow_lossy_audio=request.allow_lossy_audio,
         write_lrc=request.write_lrc,
+        save_cover_file=request.save_cover_file,
+        cover_file_strategy=request.cover_file_strategy,
         lyrics_mode=request.lyrics_mode,
         skip_existing=request.skip_existing,
         album_template=getattr(request, "album_template", "{album_artist}/{album} ({year})"),

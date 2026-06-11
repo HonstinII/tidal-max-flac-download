@@ -173,6 +173,10 @@
               <input id="writeLrc" type="checkbox" checked />
               <span data-i18n="writeLrc">Write .lrc file</span>
             </label>
+            <label class="toggle settings-inline-toggle">
+              <input id="saveCoverFile" type="checkbox" />
+              <span data-i18n="saveCoverFile">Save cover.jpg</span>
+            </label>
           </div>
           <div class="settings-row settings-select-row wide-control">
             <label class="settings-select-control">
@@ -227,6 +231,29 @@
                   <button type="button" data-select-value="keep_both" role="option">
                     <strong data-i18n="strategyKeepBoth">Keep both</strong>
                     <small data-i18n="strategyKeepBothDetail">Save a new copy when a file exists.</small>
+                  </button>
+                </div>
+              </div>
+            </label>
+            <label class="settings-select-control">
+              <span data-i18n="coverFileStrategy">Existing cover.jpg</span>
+              <select id="coverFileStrategy" class="native-hidden-select">
+                <option value="skip" data-i18n="strategySkip">Skip</option>
+                <option value="overwrite" data-i18n="strategyOverwrite">Overwrite</option>
+              </select>
+              <div class="quality-select compact-dropdown" data-select-shell data-select-target="coverFileStrategy">
+                <button type="button" class="quality-button compact-select-button" aria-haspopup="listbox" aria-expanded="false">
+                  <span data-select-label>Skip</span>
+                  <span class="quality-arrow" aria-hidden="true"></span>
+                </button>
+                <div class="quality-menu compact-select-menu hidden" role="listbox">
+                  <button type="button" data-select-value="skip" role="option">
+                    <strong data-i18n="strategySkip">Skip</strong>
+                    <small data-i18n="coverStrategySkipDetail">Keep the existing cover.jpg in that folder.</small>
+                  </button>
+                  <button type="button" data-select-value="overwrite" role="option">
+                    <strong data-i18n="strategyOverwrite">Overwrite</strong>
+                    <small data-i18n="coverStrategyOverwriteDetail">Replace cover.jpg with the current Tidal cover.</small>
                   </button>
                 </div>
               </div>

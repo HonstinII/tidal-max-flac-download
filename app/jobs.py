@@ -10,7 +10,7 @@ from typing import Callable, Iterable
 import requests
 
 from .config import cover_cache_dir, default_config
-from .covers import embed_cover, embed_mp4_cover
+from .covers import embed_cover, embed_mp4_cover, save_cover_file
 from .downloader import DownloadOptions, LossyAudioAvailable, download_track_as_flac, parse_flac_dash_manifest
 from .lyrics import embed_lyrics, embed_mp4_lyrics, extract_lyrics_text, write_lrc
 from .metadata import has_cover, repair_flac_tags, repair_mp4_tags
@@ -28,6 +28,8 @@ class JobOptions:
     audio_quality: str = "max"
     allow_lossy_audio: bool = False
     write_lrc: bool = False
+    save_cover_file: bool = False
+    cover_file_strategy: str = "skip"
     lyrics_mode: str = "auto"
     skip_existing: bool = True
     existing_strategy: str | None = None
@@ -149,6 +151,8 @@ class DownloadJobManager:
                 "audio_quality": options.audio_quality,
                 "allow_lossy_audio": options.allow_lossy_audio,
                 "write_lrc": options.write_lrc,
+                "save_cover_file": options.save_cover_file,
+                "cover_file_strategy": options.cover_file_strategy,
                 "lyrics_mode": options.lyrics_mode,
                 "skip_existing": options.skip_existing,
                 "existing_strategy": existing_strategy,
@@ -297,6 +301,19 @@ class DownloadJobManager:
         if options.get("write_lrc", False) and lyrics and result.status != "skipped":
             if self._warn_if_fails(run_id, item["id"], "lrc", lambda: write_lrc(result.output_path, lyrics)):
                 self.emit_run(run_id, {"stage": "lrc", "item_id": item["id"], "track_id": track.track_id})
+        if options.get("save_cover_file", False) and result.status != "skipped":
+            if self._warn_if_fails(
+                run_id,
+                item["id"],
+                "cover_file",
+                lambda: save_cover_file(
+                    result.output_path,
+                    track.cover_id,
+                    cover_cache,
+                    options.get("cover_file_strategy") or "skip",
+                ),
+            ):
+                self.emit_run(run_id, {"stage": "cover_file", "item_id": item["id"], "track_id": track.track_id})
         if is_flac_output and result.status != "skipped":
             self._warn_if_fails(run_id, item["id"], "metadata", lambda: repair_flac_tags(result.output_path, track))
         if is_mp4_output and result.status != "skipped":

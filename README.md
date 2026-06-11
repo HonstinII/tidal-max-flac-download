@@ -152,7 +152,7 @@ Output defaults to:
 
 The quality menu defaults to **Max**, which requests Tidal `HI_RES` and falls back to `LOSSLESS` FLAC when needed. **High** first requests `LOSSLESS`; if Tidal only exposes AAC for that track, the app asks for confirmation before downloading an `.m4a` file. AAC fallback files also receive cover art, lyrics, and basic MP4 metadata when available.
 
-The download workspace can preview track/album URLs, keep completed tracks in the queue, retry failed or skipped items in place, clear the visible queue, open the output folder, and reveal a completed file in Finder or Windows Explorer. It can embed Tidal cover art into FLAC or M4A files and write available Tidal lyrics into the audio tags. FLAC cover embedding uses `metaflac`; if it is missing, the app prompts only when **Embed cover art** is enabled.
+The download workspace can preview track/album URLs, keep completed tracks in the queue, retry failed or skipped items in place, clear the visible queue, open the output folder, and reveal a completed file in Finder or Windows Explorer. It can embed Tidal cover art into FLAC or M4A files, optionally save a `cover.jpg` beside the downloaded audio, write available Tidal lyrics into the audio tags, and preserve multi-artist metadata from Tidal's `artists` list. FLAC cover embedding uses `metaflac`; if it is missing, the app prompts only when **Embed cover art** is enabled.
 
 ## Troubleshooting
 

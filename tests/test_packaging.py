@@ -47,8 +47,13 @@ def test_settings_modal_groups_advanced_controls():
     assert "compact-dropdown" in html
     assert "data-select-target=\"lyricsMode\"" in html
     assert "data-select-target=\"existingStrategy\"" in html
+    assert "data-select-target=\"coverFileStrategy\"" in html
+    assert 'id="saveCoverFile"' in html
+    assert 'id="coverFileStrategy"' in html
     assert html.index('id="concurrency"') < html.index('id="writeLrc"')
+    assert html.index('id="writeLrc"') < html.index('id="saveCoverFile"')
     assert html.index('id="lyricsMode"') < html.index('id="existingStrategy"')
+    assert html.index('id="existingStrategy"') < html.index('id="coverFileStrategy"')
     assert "data-tooltip-key=\"concurrencyHelp\"" in html
     assert ".info-dot::after" in css
     assert ".compact-select-menu" in css
@@ -56,4 +61,6 @@ def test_settings_modal_groups_advanced_controls():
     assert "data-tooltip" in css
     assert "dataset.tooltip" in js
     assert "syncCustomSelects" in js
+    assert "save_cover_file" in js
+    assert "cover_file_strategy" in js
     assert "include_transient=true" in js

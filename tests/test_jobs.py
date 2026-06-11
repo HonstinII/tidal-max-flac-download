@@ -24,7 +24,7 @@ class FakeApi:
                 album_title="Album",
                 album_artist="Album Artist",
                 album_year="2024",
-                cover_id=None,
+                cover_id="cover-id",
                 track_number=1,
             )
         ]
@@ -124,6 +124,7 @@ def test_queue_worker_runs_metadata_postprocessing(monkeypatch, tmp_path):
 
     monkeypatch.setattr("app.jobs.parse_flac_dash_manifest", lambda manifest: manifest)
     monkeypatch.setattr("app.jobs.embed_cover", lambda *args, **kwargs: calls.append(("cover", args[0])) or True)
+    monkeypatch.setattr("app.jobs.save_cover_file", lambda *args, **kwargs: calls.append(("cover_file", args[0], args[3])) or (tmp_path / "cover.jpg"))
     monkeypatch.setattr("app.jobs.embed_lyrics", lambda *args, **kwargs: calls.append(("lyrics", args[1])) or True)
     monkeypatch.setattr("app.jobs.write_lrc", lambda *args, **kwargs: calls.append(("lrc", args[1])) or (tmp_path / "Song.lrc"))
     monkeypatch.setattr("app.jobs.repair_flac_tags", lambda *args, **kwargs: calls.append(("repair", args[1].title)) or True)
@@ -141,6 +142,8 @@ def test_queue_worker_runs_metadata_postprocessing(monkeypatch, tmp_path):
             embed_covers=True,
             embed_lyrics=True,
             write_lrc=True,
+            save_cover_file=True,
+            cover_file_strategy="overwrite",
             lyrics_mode="synced",
             album_template="{album_artist}/{album} ({year})",
             filename_template="{track_number}. {artist} - {title}",
@@ -152,6 +155,7 @@ def test_queue_worker_runs_metadata_postprocessing(monkeypatch, tmp_path):
 
     assert ("templates", "{album_artist}/{album} ({year})", "{track_number}. {artist} - {title}", "{artist} - {title}") in calls
     assert ("cover", tmp_path / "Song.flac") in calls
+    assert ("cover_file", tmp_path / "Song.flac", "overwrite") in calls
     assert ("lyrics", "[00:01.00] synced") in calls
     assert ("lrc", "[00:01.00] synced") in calls
     assert ("repair", "Song") in calls

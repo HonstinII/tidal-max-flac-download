@@ -42,6 +42,21 @@ def parse_tidal_url(url: str) -> TidalReference:
     return TidalReference(kind=match.group(1), item_id=match.group(2))
 
 
+def artist_names(payload: dict, fallback: str = "Unknown Artist") -> str:
+    artists = payload.get("artists") or []
+    names = [
+        str(artist.get("name") or "").strip()
+        for artist in artists
+        if isinstance(artist, dict) and str(artist.get("name") or "").strip()
+    ]
+    if names:
+        return ", ".join(dict.fromkeys(names))
+    artist = payload.get("artist") or {}
+    if isinstance(artist, dict) and artist.get("name"):
+        return str(artist["name"])
+    return fallback
+
+
 class TidalApi:
     def __init__(self, auth: TidalAuthState, session=None):
         if not auth.access_token:
@@ -109,13 +124,12 @@ class TidalApi:
         total_discs: int | None = None,
     ) -> TrackItem:
         track_album = album or track.get("album") or {}
-        album_artist = track_album.get("artist", {}).get("name") or track.get(
-            "artist", {}
-        ).get("name", "Unknown Artist")
+        track_artist = artist_names(track)
+        album_artist = artist_names(track_album, fallback=track_artist)
         return TrackItem(
             track_id=str(track["id"]),
             title=str(track.get("title") or track["id"]),
-            artist=str(track.get("artist", {}).get("name") or "Unknown Artist"),
+            artist=track_artist,
             album_title=str(track_album.get("title") or track.get("title") or ""),
             album_artist=str(album_artist),
             album_year=str(

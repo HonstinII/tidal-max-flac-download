@@ -45,3 +45,38 @@ def test_embed_mp4_cover_writes_covr_tag(monkeypatch, tmp_path):
     assert audio["covr"][0] == b"jpg"
     assert audio["covr"][0].imageformat == FakeCover.FORMAT_JPEG
     assert audio["saved"] == ["yes"]
+
+
+def test_save_cover_file_writes_fixed_cover_jpg(monkeypatch, tmp_path):
+    from app import covers
+
+    cached = tmp_path / "cached.jpg"
+    cached.write_bytes(b"new-cover")
+    audio = tmp_path / "Album" / "Song.flac"
+    audio.parent.mkdir()
+    audio.write_text("audio")
+    monkeypatch.setattr(covers, "download_cover", lambda *args, **kwargs: cached)
+
+    result = covers.save_cover_file(audio, "cover-id", tmp_path / "cache")
+
+    assert result == audio.parent / "cover.jpg"
+    assert result.read_bytes() == b"new-cover"
+
+
+def test_save_cover_file_can_skip_or_overwrite_existing(monkeypatch, tmp_path):
+    from app import covers
+
+    cached = tmp_path / "cached.jpg"
+    cached.write_bytes(b"new-cover")
+    audio = tmp_path / "Album" / "Song.flac"
+    audio.parent.mkdir()
+    audio.write_text("audio")
+    existing = audio.parent / "cover.jpg"
+    existing.write_bytes(b"old-cover")
+    monkeypatch.setattr(covers, "download_cover", lambda *args, **kwargs: cached)
+
+    assert covers.save_cover_file(audio, "cover-id", tmp_path / "cache", "skip") == existing
+    assert existing.read_bytes() == b"old-cover"
+
+    assert covers.save_cover_file(audio, "cover-id", tmp_path / "cache", "overwrite") == existing
+    assert existing.read_bytes() == b"new-cover"

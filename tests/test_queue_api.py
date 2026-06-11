@@ -48,6 +48,8 @@ def test_queue_api_creates_run_and_items(monkeypatch, tmp_path):
             "embed_covers": True,
             "embed_lyrics": True,
             "write_lrc": True,
+            "save_cover_file": True,
+            "cover_file_strategy": "overwrite",
             "lyrics_mode": "plain",
             "album_template": "{album_artist}/{album} ({year})",
             "filename_template": "{track_number}. {artist} - {title}",
@@ -63,6 +65,8 @@ def test_queue_api_creates_run_and_items(monkeypatch, tmp_path):
     assert data["items"][0]["status"] == "ready"
     assert data["items"][0]["progress_current"] == 0
     assert data["run"]["options"]["write_lrc"] is True
+    assert data["run"]["options"]["save_cover_file"] is True
+    assert data["run"]["options"]["cover_file_strategy"] == "overwrite"
     assert data["run"]["options"]["lyrics_mode"] == "plain"
     assert data["run"]["options"]["album_template"] == "{album_artist}/{album} ({year})"
 

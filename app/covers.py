@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import subprocess
 
 from mutagen.mp4 import MP4, MP4Cover
@@ -54,3 +55,20 @@ def embed_mp4_cover(mp4_path: Path, cover_id: str | None, cache_dir: Path) -> bo
     ]
     audio.save()
     return True
+
+
+def save_cover_file(
+    audio_path: Path,
+    cover_id: str | None,
+    cache_dir: Path,
+    strategy: str = "skip",
+) -> Path | None:
+    if not cover_id:
+        return None
+    image_path = download_cover(cover_id, cache_dir)
+    target = audio_path.parent / "cover.jpg"
+    if target.exists() and strategy != "overwrite":
+        return target
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(image_path, target)
+    return target
